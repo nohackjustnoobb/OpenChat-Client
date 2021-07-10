@@ -16,11 +16,16 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {Input, Button, Overlay} from 'react-native-elements';
+import {Input, Button, Overlay, ThemeConsumer} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCog, faUserPlus} from '@fortawesome/free-solid-svg-icons';
+import {
+  faCog,
+  faUserPlus,
+  faUser,
+  faUsers,
+} from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
 const Stack = createStackNavigator();
@@ -74,11 +79,135 @@ function HomeHeaderRight() {
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    var wsUrl = null;
+    if (props.serverUrl) {
+      wsUrl = props.serverUrl.replace('http', 'ws');
+    }
+    this.state = {
+      wsUrl: wsUrl,
+      connected: false,
+      myInfo: props.userInfo,
+      message: {},
+      group: {},
+      user: {},
+    };
+  }
+
+  WSHandler(e) {
+    function yourInfoHandler(info) {
+      setState({myInfo: info});
+    }
+
+    function groupHandler(groupList) {
+      var addGroup = groupList.reduce((map, value) => {
+        map[value.id] = value;
+        return map;
+      }, {});
+      var group = {...state.group, ...addGroup};
+      setState({group: group});
+    }
+
+    function usersHandler(userList) {
+      var addUser = userList.reduce((map, value) => {
+        map[value.id] = value;
+        return map;
+      }, {});
+      var user = {...state.users, ...addUser};
+      setState({user: user});
+    }
+
+    var data = JSON.parse(e.data);
+    var handler = {
+      yourInfo: yourInfoHandler,
+      group: groupHandler,
+      users: usersHandler,
+    };
+    var setState = this.setState.bind(this);
+    var state = this.state;
+
+    for (var eventType in data) {
+      for (const [key, handlerFunction] of Object.entries(handler)) {
+        if (eventType === key) {
+          handlerFunction(data[eventType]);
+        }
+      }
+    }
+  }
+
+  connectWS() {
+    this.ws = new WebSocket(this.state.wsUrl);
+    this.ws.onopen = e => {
+      this.setState({connected: true});
+      this.ws.send(
+        JSON.stringify({Authorization: `token ${this.props.token}`}),
+      );
+    };
+    this.ws.onmessage = this.WSHandler.bind(this);
+  }
+
+  getUserByID(ids) {
+    this.ws.send(JSON.stringify({users: ids}));
   }
 
   render() {
-    return <ScrollView style={{backgroundColor: '#F9F9F9'}}></ScrollView>;
+    if (!this.ws) {
+      this.connectWS();
+    }
+
+    var groupsListView = [];
+    for (var key in this.state.group) {
+      var group = this.state.group[key];
+      var groupName = group.groupName;
+      var avatar = group.avatar;
+      if (group.isDM) {
+        var userID = group.members.filter(v => v !== this.state.myInfo.id)[0];
+        if (!this.state.user[userID]) {
+          this.getUserByID([userID]);
+        } else {
+          groupName = this.state.user[userID].username;
+          avatar = this.state.user[userID].avatar;
+        }
+      }
+
+      if (!avatar) {
+        var avatarView = (
+          <View
+            style={{
+              backgroundColor: '#CCCCCC',
+              height: 50,
+              width: 50,
+              borderRadius: 25,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: 10,
+            }}>
+            <FontAwesomeIcon
+              icon={group.isDM ? faUser : faUsers}
+              color="#ffffff"
+              size={25}
+            />
+          </View>
+        );
+      } else {
+        var avatarView;
+      }
+
+      groupsListView.push(
+        <View key={group.id} style={{flexDirection: 'row', marginVertical: 3}}>
+          {avatarView}
+          <View>
+            <Text style={{fontWeight: '500'}}>{groupName}</Text>
+          </View>
+        </View>,
+      );
+    }
+
+    return (
+      <ScrollView
+        style={{backgroundColor: '#F9F9F9', padding: 10, paddingBottom: 0}}>
+        {groupsListView}
+      </ScrollView>
+    );
   }
 }
 
@@ -415,23 +544,7 @@ class App extends React.Component {
     };
   }
 
-  async getUrlInfo() {
-    try {
-      var response = await fetch(this.state.serverUrl + 'user/me/', {
-        headers: new Headers({Authorization: `token ${this.state.token}`}),
-      });
-      if (response.ok) {
-        this.setState({userInfo: await response.json()});
-      } else {
-        throw 'Failed to get user profile';
-      }
-    } catch (e) {
-      Alert.alert('Failed to get user profile');
-    }
-  }
-
   render() {
-    if (!this.state.userInfo && this.state.token) this.getUrlInfo();
     return (
       <SafeAreaProvider>
         <NavigationContainer>
