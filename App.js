@@ -11,12 +11,13 @@ import {
   View,
   KeyboardAvoidingView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {Input, Button, Overlay, ThemeConsumer} from 'react-native-elements';
+import {Input, Button, Overlay} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -25,6 +26,8 @@ import {
   faUserPlus,
   faUser,
   faUsers,
+  faImage,
+  faFile,
 } from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
@@ -50,9 +53,10 @@ function HomeHeaderTitle() {
   );
 }
 
-function HomeHeaderLeft() {
+function HomeHeaderLeft(props) {
   return (
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => props.navigation.navigation.navigate('Settings')}>
       <FontAwesomeIcon
         icon={faCog}
         size={25}
@@ -83,19 +87,48 @@ class Home extends React.Component {
     if (props.serverUrl) {
       wsUrl = props.serverUrl.replace('http', 'ws');
     }
+    this.MMKV = new MMKVStorage.Loader().initialize();
     this.state = {
       wsUrl: wsUrl,
       connected: false,
-      myInfo: props.userInfo,
       message: {},
       group: {},
       user: {},
     };
   }
 
+  componentDidMount() {
+    this.getServerInfo();
+    this.connectWS();
+  }
+
+  async getServerInfo() {
+    try {
+      var response = await fetch(this.props.serverUrl);
+      if (!response.ok) throw 'Cannot connect to server';
+      var jsonResult = await response.json();
+      this.props.setState({serverInfo: jsonResult});
+    } catch (e) {
+      Alert.alert('Cannot connect to server');
+      this.disconnectServer();
+    }
+  }
+
+  disconnectServer() {
+    this.MMKV.removeItem('token');
+    this.MMKV.removeItem('serverUrl');
+    this.props.setState({serverUrl: null, token: null}, () =>
+      this.props.navigation.replace('Login'),
+    );
+  }
+
+  getUserByID(ids) {
+    this.ws.send(JSON.stringify({users: ids}));
+  }
+
   WSHandler(e) {
     function yourInfoHandler(info) {
-      setState({myInfo: info});
+      setAppState({userInfo: info});
     }
 
     function groupHandler(groupList) {
@@ -112,7 +145,7 @@ class Home extends React.Component {
         map[value.id] = value;
         return map;
       }, {});
-      var user = {...state.users, ...addUser};
+      var user = {...state.user, ...addUser};
       setState({user: user});
     }
 
@@ -124,6 +157,7 @@ class Home extends React.Component {
     };
     var setState = this.setState.bind(this);
     var state = this.state;
+    var setAppState = this.props.setState;
 
     for (var eventType in data) {
       for (const [key, handlerFunction] of Object.entries(handler)) {
@@ -142,25 +176,34 @@ class Home extends React.Component {
         JSON.stringify({Authorization: `token ${this.props.token}`}),
       );
     };
+
+    this.ws.onclose = e => {
+      this.setState({connected: false}, () => {
+        Alert.alert('Cannot connect to server', '', [
+          {
+            text: 'Reconnect',
+            onPress: () => {
+              this.connectWS();
+              this.setState({connected: true});
+            },
+          },
+          {text: 'Disconnect', onPress: this.disconnectServer.bind(this)},
+        ]);
+      });
+    };
+
     this.ws.onmessage = this.WSHandler.bind(this);
   }
 
-  getUserByID(ids) {
-    this.ws.send(JSON.stringify({users: ids}));
-  }
-
   render() {
-    if (!this.ws) {
-      this.connectWS();
-    }
-
+    console.log(this.props.userInfo);
     var groupsListView = [];
     for (var key in this.state.group) {
       var group = this.state.group[key];
       var groupName = group.groupName;
       var avatar = group.avatar;
       if (group.isDM) {
-        var userID = group.members.filter(v => v !== this.state.myInfo.id)[0];
+        var userID = group.members.filter(v => v !== this.props.userInfo.id)[0];
         if (!this.state.user[userID]) {
           this.getUserByID([userID]);
         } else {
@@ -169,38 +212,149 @@ class Home extends React.Component {
         }
       }
 
-      if (!avatar) {
-        var avatarView = (
-          <View
-            style={{
-              backgroundColor: '#CCCCCC',
-              height: 50,
-              width: 50,
-              borderRadius: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: 10,
-            }}>
+      var avatarView = (
+        <View
+          style={{
+            backgroundColor: '#CCCCCC',
+            height: 50,
+            width: 50,
+            borderRadius: 25,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 10,
+            overflow: 'hidden',
+          }}>
+          {!avatar ? (
             <FontAwesomeIcon
               icon={group.isDM ? faUser : faUsers}
               color="#ffffff"
               size={25}
             />
-          </View>
-        );
-      } else {
-        var avatarView;
+          ) : (
+            <Image
+              source={{uri: this.props.serverUrl.slice(0, -1) + avatar}}
+              style={{height: 50, width: 50}}
+            />
+          )}
+        </View>
+      );
+
+      var messageOwnerView = <View />;
+      if (group.lastMessage && !group.isDM) {
+        var userID = group.lastMessage.owner;
+        if (!this.state.user[userID]) {
+          this.getUserByID([userID]);
+        } else {
+          messageOwnerView = (
+            <Text
+              style={{
+                fontSize: 12,
+                color: '#8A90D5',
+                fontWeight: '500',
+              }}>{`${this.state.user[userID].username}: `}</Text>
+          );
+        }
+      }
+
+      var sendTimeString = '';
+      if (group.lastMessage) {
+        var sendTime = new Date(group.lastMessage.sendDateTime);
+        var now = new Date();
+        var diff = new Date(now.getTime() - sendTime.getTime());
+        sendTimeString = sendTime.toLocaleDateString('en-GB');
+
+        if (
+          diff.getUTCFullYear() - 1970 === 0 &&
+          diff.getUTCMonth() === 0 &&
+          diff.getUTCDate() <= 7
+        ) {
+          var weekday = [
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+          ];
+          sendTimeString = weekday[sendTime.getDay()];
+          if (diff.getUTCDate() - 1 <= 1) {
+            sendTimeString = 'Yesterday';
+            if (diff.getUTCDate() - 1 === 0) {
+              sendTimeString = sendTime.toLocaleString('en-US', {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true,
+              });
+            }
+          }
+        }
       }
 
       groupsListView.push(
-        <View key={group.id} style={{flexDirection: 'row', marginVertical: 3}}>
+        <View
+          key={group.id}
+          style={{
+            flexDirection: 'row',
+            marginVertical: 3,
+            height: 55,
+            alignItems: 'center',
+          }}>
           {avatarView}
-          <View>
-            <Text style={{fontWeight: '500'}}>{groupName}</Text>
+          <View style={{height: 40, justifyContent: 'center', flex: 1}}>
+            <Text
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 10,
+                fontSize: 12,
+                color: '#8A90D5',
+              }}>
+              {sendTimeString}
+            </Text>
+            <Text style={{fontWeight: '600', marginBottom: 2}}>
+              {groupName}
+            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              {messageOwnerView}
+              {group.lastMessage?.additionImage ||
+              group.lastMessage?.additionFile ? (
+                <React.Fragment>
+                  <FontAwesomeIcon
+                    icon={group.lastMessage?.additionImage ? faImage : faFile}
+                    color="#8A90D5"
+                    size={group.lastMessage?.additionImage ? 15 : 12}
+                  />
+                  <Text
+                    style={{
+                      color: '#8A90D5',
+                      marginLeft: 5,
+                      fontWeight: '600',
+                      fontSize: 12,
+                    }}>
+                    {group.lastMessage?.additionImage ? 'Image' : 'File'}
+                  </Text>
+                </React.Fragment>
+              ) : (
+                <Text style={{fontSize: 12, color: '#8A90D5'}}>
+                  {group.lastMessage?.content}
+                </Text>
+              )}
+            </View>
           </View>
         </View>,
+        <View
+          key={`_${key}`}
+          style={{
+            height: 0.5,
+            backgroundColor: '#DDDDDD',
+            width: '80%',
+            alignSelf: 'center',
+          }}
+        />,
       );
     }
+    groupsListView.pop();
 
     return (
       <ScrollView
@@ -308,8 +462,12 @@ class Login extends React.Component {
       },
     });
 
-    if (this.state.connected && !this.state.serverInfo) {
-      this.getServerInfo();
+    if (this.state.connected) {
+      if (!this.props.serverUrl) {
+        this.setState({connected: false});
+      } else if (!this.state.serverInfo) {
+        this.getServerInfo();
+      }
     }
 
     return (
@@ -526,6 +684,17 @@ class Login extends React.Component {
   }
 }
 
+class Settings extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+  }
+
+  render() {
+    return <ScrollView style={{backgroundColor: '#F9F9F9'}}></ScrollView>;
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -541,6 +710,7 @@ class App extends React.Component {
       token: token,
       serverUrl: serverUrl,
       userInfo: null,
+      serverInfo: null,
     };
   }
 
@@ -549,23 +719,28 @@ class App extends React.Component {
       <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator
-            initialRouteName={this.state.token ? 'Home' : 'Login'}>
+            initialRouteName={this.state.token ? 'Home' : 'Login'}
+            headerMode="screen">
             <Stack.Screen
               name="Home"
-              options={{
+              options={navigation => ({
                 headerTitle: props => <HomeHeaderTitle {...props} />,
-                headerLeft: props => <HomeHeaderLeft {...props} />,
+                headerLeft: props => (
+                  <HomeHeaderLeft navigation={navigation} {...props} />
+                ),
                 headerRight: props => <HomeHeaderRight {...props} />,
                 headerStyle: {
                   height: getStatusBarHeight() + 70,
                 },
-              }}>
+              })}>
               {props => (
                 <Home
                   {...props}
                   setState={this.setState.bind(this)}
                   serverUrl={this.state.serverUrl}
+                  userInfo={this.state.userInfo}
                   token={this.state.token}
+                  serverInfo={this.state.serverInfo}
                 />
               )}
             </Stack.Screen>
@@ -575,6 +750,23 @@ class App extends React.Component {
                   {...props}
                   setState={this.setState.bind(this)}
                   serverUrl={this.state.serverUrl}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Settings"
+              options={{
+                headerBackTitleStyle: {
+                  color: '#6873F2',
+                },
+                headerTintColor: '#6873F2',
+                headerTitleStyle: {color: '#000000', fontSize: 21},
+              }}>
+              {props => (
+                <Settings
+                  userInfo={this.state.userInfo}
+                  serverInfo={this.state.serverInfo}
+                  {...props}
                 />
               )}
             </Stack.Screen>
