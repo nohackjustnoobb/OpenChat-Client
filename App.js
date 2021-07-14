@@ -33,6 +33,7 @@ import {getStatusBarHeight} from 'react-native-status-bar-height';
 
 const Stack = createStackNavigator();
 
+// Title
 function HomeHeaderTitle() {
   return (
     <View>
@@ -53,6 +54,7 @@ function HomeHeaderTitle() {
   );
 }
 
+// Settings Button
 function HomeHeaderLeft(props) {
   return (
     <TouchableOpacity
@@ -67,6 +69,7 @@ function HomeHeaderLeft(props) {
   );
 }
 
+// Friends List Button
 function HomeHeaderRight() {
   return (
     <TouchableOpacity>
@@ -80,13 +83,16 @@ function HomeHeaderRight() {
   );
 }
 
+// Main Page
 class Home extends React.Component {
   constructor(props) {
     super(props);
     var wsUrl = null;
+    // gernerate WS url with http/https url
     if (props.serverUrl) {
       wsUrl = props.serverUrl.replace('http', 'ws');
     }
+    // initialize MMKVStorage
     this.MMKV = new MMKVStorage.Loader().initialize();
     this.state = {
       wsUrl: wsUrl,
@@ -98,10 +104,12 @@ class Home extends React.Component {
   }
 
   componentDidMount() {
+    // initialize
     this.getServerInfo();
     this.connectWS();
   }
 
+  // check if server working
   async getServerInfo() {
     try {
       var response = await fetch(this.props.serverUrl);
@@ -114,6 +122,7 @@ class Home extends React.Component {
     }
   }
 
+  // clear server and token
   disconnectServer() {
     this.MMKV.removeItem('token');
     this.MMKV.removeItem('serverUrl');
@@ -122,10 +131,12 @@ class Home extends React.Component {
     );
   }
 
+  // get user info via WS
   getUserByID(ids) {
     this.ws.send(JSON.stringify({users: ids}));
   }
 
+  // WS message handler
   WSHandler(e) {
     function yourInfoHandler(info) {
       setAppState({userInfo: info});
@@ -149,16 +160,22 @@ class Home extends React.Component {
       setState({user: user});
     }
 
+    // decode
     var data = JSON.parse(e.data);
+
+    // define event and its handler
     var handler = {
       yourInfo: yourInfoHandler,
       group: groupHandler,
       users: usersHandler,
     };
+
+    // variable for functions
     var setState = this.setState.bind(this);
     var state = this.state;
     var setAppState = this.props.setState;
 
+    // check event and use its handler
     for (var eventType in data) {
       for (const [key, handlerFunction] of Object.entries(handler)) {
         if (eventType === key) {
@@ -168,8 +185,12 @@ class Home extends React.Component {
     }
   }
 
+  // connect or reconnect to WS
   connectWS() {
+    // initialize WS
     this.ws = new WebSocket(this.state.wsUrl);
+
+    // authorization
     this.ws.onopen = e => {
       this.setState({connected: true});
       this.ws.send(
@@ -177,6 +198,7 @@ class Home extends React.Component {
       );
     };
 
+    // handle reconnect or disconnect
     this.ws.onclose = e => {
       this.setState({connected: false}, () => {
         Alert.alert('Cannot connect to server', '', [
@@ -192,16 +214,23 @@ class Home extends React.Component {
       });
     };
 
+    // define WS handler
     this.ws.onmessage = this.WSHandler.bind(this);
   }
 
   render() {
-    console.log(this.props.userInfo);
+    // define array for groups list
     var groupsListView = [];
+
+    // loop for all groups
     for (var key in this.state.group) {
       var group = this.state.group[key];
+
+      // define groupName and avatar for handling DM
       var groupName = group.groupName;
       var avatar = group.avatar;
+
+      // handle DM
       if (group.isDM) {
         var userID = group.members.filter(v => v !== this.props.userInfo.id)[0];
         if (!this.state.user[userID]) {
@@ -212,6 +241,7 @@ class Home extends React.Component {
         }
       }
 
+      // map avatar view
       var avatarView = (
         <View
           style={{
@@ -239,6 +269,7 @@ class Home extends React.Component {
         </View>
       );
 
+      // handle last message owner
       var messageOwnerView = <View />;
       if (group.lastMessage && !group.isDM) {
         var userID = group.lastMessage.owner;
@@ -256,6 +287,7 @@ class Home extends React.Component {
         }
       }
 
+      //handle last message sent time
       var sendTimeString = '';
       if (group.lastMessage) {
         var sendTime = new Date(group.lastMessage.sendDateTime);
@@ -291,6 +323,7 @@ class Home extends React.Component {
         }
       }
 
+      // map all information together
       groupsListView.push(
         <View
           key={group.id}
@@ -368,6 +401,7 @@ class Home extends React.Component {
 class Login extends React.Component {
   constructor(props) {
     super(props);
+    // initialize MMKVStorage
     this.MMKV = new MMKVStorage.Loader().initialize();
     this.state = {
       username: '',
@@ -378,15 +412,19 @@ class Login extends React.Component {
     };
   }
 
+  // handle login
   async login() {
+    // check if server connected
     if (!this.props.serverUrl) {
       return this.setState({setServerMenu: true});
     }
 
+    // check if password or username if empty
     if (!this.state.password || !this.state.username) {
       return Alert.alert('Please enter your username and password');
     }
 
+    // get token from server
     try {
       var response = await fetch(this.props.serverUrl + 'token/', {
         method: 'POST',
@@ -398,11 +436,14 @@ class Login extends React.Component {
           password: this.state.password,
         }),
       });
+
       if (response.ok) {
         var jsonResult = await response.json();
         var token = jsonResult.token;
+        // save token
         this.MMKV.setString('token', token);
         this.props.setState({token: token});
+        // navigate to Home page
         this.props.navigation.replace('Home');
       } else {
         Alert.alert('Username or Password is incorrect');
@@ -412,13 +453,17 @@ class Login extends React.Component {
     }
   }
 
+  // connect to server
   async setServerUrl() {
     try {
+      // add '/' at the end for url
       if (!this.props.serverUrl.endsWith('/')) {
         this.props.setState({serverUrl: this.props.serverUrl + '/'});
       }
+
       var response = await fetch(this.props.serverUrl);
       if (response.ok) {
+        // save server url
         this.MMKV.setString('serverUrl', this.props.serverUrl);
         var jsonResult = await response.json();
         Alert.alert('Server Connected');
@@ -445,6 +490,7 @@ class Login extends React.Component {
       Alert.alert('Connection Error');
       this.setState({connected: false});
       this.props.setState({serverUrl: ''});
+      // remove server url
       this.MMKV.removeItem('serverUrl');
     }
   }
@@ -462,6 +508,7 @@ class Login extends React.Component {
       },
     });
 
+    // get server info if connected
     if (this.state.connected) {
       if (!this.props.serverUrl) {
         this.setState({connected: false});
