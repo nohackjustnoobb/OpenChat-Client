@@ -734,11 +734,105 @@ class Login extends React.Component {
 class Settings extends React.Component {
   constructor(props) {
     super(props);
+    this.MMKV = new MMKVStorage.Loader().initialize();
     this.state = {};
   }
 
+  // clear server and token
+  disconnectServer() {
+    this.MMKV.removeItem('token');
+    this.MMKV.removeItem('serverUrl');
+    this.props.setState({serverUrl: null, token: null}, () =>
+      this.props.navigation.replace('Login'),
+    );
+  }
+
+  // clear token
+  logout() {
+    this.MMKV.removeItem('token');
+    this.props.setState({token: null}, () =>
+      this.props.navigation.replace('Login'),
+    );
+  }
+
   render() {
-    return <ScrollView style={{backgroundColor: '#F9F9F9'}}></ScrollView>;
+    return (
+      <ScrollView
+        style={{backgroundColor: '#F9F9F9'}}
+        contentContainerStyle={{justifyContent: 'center'}}>
+        <View
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+            backgroundColor: '#ffffff',
+            marginVertical: 20,
+            borderBottomWidth: 1,
+            borderTopWidth: 1,
+            borderColor: '#cccccc',
+          }}>
+          <View
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: 35,
+              overflow: 'hidden',
+              backgroundColor: '#CCCCCC',
+              justifyContent: 'center',
+              margin: 10,
+              marginRight: 10,
+              marginLeft: 20,
+            }}>
+            {this.props.userInfo.avatar ? (
+              <Image
+                source={{
+                  uri:
+                    this.props.serverUrl?.slice(0, -1) +
+                    this.props.userInfo?.avatar,
+                }}
+                style={{width: 70, height: 70}}
+              />
+            ) : (
+              <FontAwesomeIcon
+                icon={faUser}
+                color="#ffffff"
+                size={35}
+                style={{alignSelf: 'center'}}
+              />
+            )}
+          </View>
+          <Text style={{fontSize: 16, fontWeight: '600'}}>
+            {this.props.userInfo.username}
+          </Text>
+        </View>
+        <View
+          style={{
+            borderBottomWidth: 1,
+            borderTopWidth: 1,
+            borderColor: '#cccccc',
+          }}>
+          <Button
+            title="Log Out"
+            buttonStyle={{backgroundColor: '#ffffff'}}
+            titleStyle={{color: '#ff0000'}}
+            onPress={() => this.logout()}
+          />
+          <View
+            style={{
+              backgroundColor: '#eeeeee',
+              height: 1,
+              width: '100%',
+              alignSelf: 'center',
+            }}
+          />
+          <Button
+            title="Disconnect From Server"
+            buttonStyle={{backgroundColor: '#ffffff'}}
+            titleStyle={{color: '#ff0000'}}
+            onPress={() => this.disconnectServer()}
+          />
+        </View>
+      </ScrollView>
+    );
   }
 }
 
@@ -813,6 +907,8 @@ class App extends React.Component {
                 <Settings
                   userInfo={this.state.userInfo}
                   serverInfo={this.state.serverInfo}
+                  serverUrl={this.state.serverUrl}
+                  setState={this.setState.bind(this)}
                   {...props}
                 />
               )}
