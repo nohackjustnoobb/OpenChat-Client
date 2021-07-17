@@ -24,139 +24,20 @@ import {
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    var wsUrl = null;
-    // gernerate WS url with http/https url
-    if (props.serverUrl) {
-      wsUrl = props.serverUrl.replace('http', 'ws');
-    }
-    // initialize MMKVStorage
-    this.MMKV = new MMKVStorage.Loader().initialize();
-    this.state = {
-      wsUrl: wsUrl,
-      connected: false,
-      message: {},
-      group: {},
-      user: {},
-    };
+    this.state = {};
   }
 
   componentDidMount() {
     // initialize
     if (!this.props.serverInfo) this.props.getServerInfo();
-    this.connectWS();
+    this.props.connectWS();
   }
 
   componentDidUpdate() {
-    if (!this.props.token && this.state.connected)
-      this.setState({connected: false}, () =>
+    if (!this.props.token && this.props.wsConnected)
+      this.props.setState({wsConnected: false}, () =>
         this.props.navigation.replace('Login'),
       );
-  }
-
-  // get user info via WS
-  getUserByID(ids) {
-    this.ws.send(JSON.stringify({users: ids}));
-  }
-
-  // WS message handler
-  WSHandler(e) {
-    function yourInfoHandler(info) {
-      setAppState({userInfo: info});
-      var user = {};
-      user[info.id] = info;
-      setState({user: user});
-    }
-
-    function groupHandler(groupList) {
-      var addGroup = groupList.reduce((map, value) => {
-        map[value.id] = value;
-        return map;
-      }, {});
-      var group = {...state.group, ...addGroup};
-      setState({group: group});
-    }
-
-    function usersHandler(userList) {
-      var addUser = userList.reduce((map, value) => {
-        map[value.id] = value;
-        return map;
-      }, {});
-      var user = {...state.user, ...addUser};
-      setState({user: user});
-    }
-
-    function messageHandler(message) {
-      var [group, message] = Object.entries(message)[0];
-      if (state.message[group]) {
-        var groupMessage = state.message[group];
-        groupMessage.push(message);
-        var addMessage = {};
-        addMessage[group] = groupMessage;
-        setState({message: {...state.message, ...addMessage}});
-      } else {
-        var groupMessage = {};
-        groupMessage[group] = [message];
-        setState({message: {...state.message, ...groupMessage}});
-      }
-    }
-
-    // decode
-    var data = JSON.parse(e.data);
-
-    // define event and its handler
-    var handler = {
-      yourInfo: yourInfoHandler,
-      group: groupHandler,
-      users: usersHandler,
-      message: messageHandler,
-    };
-
-    // variable for functions
-    var setState = this.setState.bind(this);
-    var state = this.state;
-    var setAppState = this.props.setState;
-
-    // check event and use its handler
-    for (var eventType in data) {
-      for (const [key, handlerFunction] of Object.entries(handler)) {
-        if (eventType === key) {
-          handlerFunction(data[eventType]);
-        }
-      }
-    }
-  }
-
-  // connect or reconnect to WS
-  connectWS() {
-    // initialize WS
-    this.ws = new WebSocket(this.state.wsUrl);
-
-    // authorization
-    this.ws.onopen = e => {
-      this.setState({connected: true});
-      this.ws.send(
-        JSON.stringify({Authorization: `token ${this.props.token}`}),
-      );
-    };
-
-    // handle reconnect or disconnect
-    this.ws.onclose = e => {
-      this.setState({connected: false}, () => {
-        Alert.alert('Cannot connect to server', '', [
-          {
-            text: 'Reconnect',
-            onPress: () => {
-              this.connectWS();
-              this.setState({connected: true});
-            },
-          },
-          {text: 'Disconnect', onPress: () => this.props.disconnectServe()},
-        ]);
-      });
-    };
-
-    // define WS handler
-    this.ws.onmessage = this.WSHandler.bind(this);
   }
 
   render() {
@@ -164,8 +45,8 @@ class Home extends React.Component {
     var groupsListView = [];
 
     // loop for all groups
-    for (var key in this.state.group) {
-      var group = this.state.group[key];
+    for (var key in this.props.group) {
+      let group = this.props.group[key];
 
       // define groupName and avatar for handling DM
       var groupName = group.groupName;
@@ -174,11 +55,11 @@ class Home extends React.Component {
       // handle DM
       if (group.isDM) {
         var userID = group.members.filter(v => v !== this.props.userInfo.id)[0];
-        if (!this.state.user[userID]) {
-          this.getUserByID([userID]);
+        if (!this.props.user[userID]) {
+          this.props.getUserByID([userID]);
         } else {
-          groupName = this.state.user[userID].username;
-          avatar = this.state.user[userID].avatar;
+          groupName = this.props.user[userID].username;
+          avatar = this.props.user[userID].avatar;
         }
       }
 
@@ -216,8 +97,8 @@ class Home extends React.Component {
       var messageOwnerView = <View />;
       if (group.lastMessage && !group.isDM) {
         var userID = group.lastMessage.owner;
-        if (!this.state.user[userID]) {
-          this.getUserByID([userID]);
+        if (!this.props.user[userID]) {
+          this.props.getUserByID([userID]);
         } else {
           messageOwnerView = (
             <Text
@@ -228,7 +109,7 @@ class Home extends React.Component {
               }}>{`${
               userID === this.props.userInfo.id
                 ? 'You'
-                : this.state.user[userID].username
+                : this.props.user[userID].username
             }: `}</Text>
           );
         }
@@ -283,9 +164,7 @@ class Home extends React.Component {
           activeOpacity={0.5}
           onPress={() =>
             this.props.navigation.navigate('Chat', {
-              group: group,
-              user: this.state.user,
-              messages: this.state.message[key],
+              group: group.id,
             })
           }>
           {avatarView}

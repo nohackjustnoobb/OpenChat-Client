@@ -86,9 +86,14 @@ class App extends React.Component {
       serverUrl: serverUrl,
       userInfo: null,
       serverInfo: null,
+      wsConnected: false,
+      message: {},
+      group: {},
+      user: {},
     };
   }
 
+  // check if server working and also get info
   async getServerInfo() {
     try {
       var response = await fetch(this.state.serverUrl);
@@ -100,7 +105,6 @@ class App extends React.Component {
       this.MMKV.removeItem('token');
       this.MMKV.removeItem('serverUrl');
       this.setState({serverUrl: null, token: null});
-      // todo: navigate to Login
     }
   }
 
@@ -108,13 +112,124 @@ class App extends React.Component {
   disconnectServer() {
     this.MMKV.removeItem('token');
     this.MMKV.removeItem('serverUrl');
-    this.setState({serverUrl: null, token: null});
+    this.setState({
+      serverUrl: null,
+      token: null,
+      group: {},
+      message: {},
+      user: {},
+    });
   }
 
   // clear token
   logout() {
     this.MMKV.removeItem('token');
-    this.setState({token: null});
+    this.setState({token: null, group: {}, message: {}});
+  }
+
+  // WS message handler
+  WSHandler(e) {
+    function yourInfoHandler(info) {
+      setState({userInfo: info});
+      var user = {};
+      user[info.id] = info;
+      setState({user: user});
+    }
+
+    function groupHandler(groupList) {
+      var addGroup = groupList.reduce((map, value) => {
+        map[value.id] = value;
+        return map;
+      }, {});
+      var group = {...state.group, ...addGroup};
+      setState({group: group});
+    }
+
+    function usersHandler(userList) {
+      var addUser = userList.reduce((map, value) => {
+        map[value.id] = value;
+        return map;
+      }, {});
+      var user = {...state.user, ...addUser};
+      setState({user: user});
+    }
+
+    function messageHandler(message) {
+      var [group, message] = Object.entries(message)[0];
+      if (state.message[group]) {
+        var groupMessage = state.message[group];
+        groupMessage.push(message);
+        var addMessage = {};
+        addMessage[group] = groupMessage;
+        setState({message: {...state.message, ...addMessage}});
+      } else {
+        var groupMessage = {};
+        groupMessage[group] = [message];
+        setState({message: {...state.message, ...groupMessage}});
+      }
+    }
+
+    // decode
+    var data = JSON.parse(e.data);
+
+    // define event and its handler
+    var handler = {
+      yourInfo: yourInfoHandler,
+      group: groupHandler,
+      users: usersHandler,
+      message: messageHandler,
+    };
+
+    // variable for functions
+    var setState = this.setState.bind(this);
+    var state = this.state;
+
+    // check event and use its handler
+    for (var eventType in data) {
+      for (const [key, handlerFunction] of Object.entries(handler)) {
+        if (eventType === key) {
+          handlerFunction(data[eventType]);
+        }
+      }
+    }
+  }
+
+  // connect or reconnect to WS
+  connectWS() {
+    // initialize WS
+    this.ws = new WebSocket(this.state.serverUrl.replace('http', 'ws'));
+
+    // authorization
+    this.ws.onopen = e => {
+      this.setState({wsConnected: true});
+      this.ws.send(
+        JSON.stringify({Authorization: `token ${this.state.token}`}),
+      );
+    };
+
+    // handle reconnect or disconnect
+    this.ws.onclose = e => {
+      this.setState({connected: false}, () => {
+        Alert.alert('Cannot connect to server', '', [
+          {
+            text: 'Reconnect',
+            onPress: () => {
+              this.connectWS();
+              this.setState({wsConnected: true});
+            },
+          },
+          {text: 'Disconnect', onPress: () => this.disconnectServe()},
+        ]);
+      });
+    };
+
+    // define WS handler
+    this.ws.onmessage = this.WSHandler.bind(this);
+  }
+
+  // get user info via WS
+  getUserByID(ids) {
+    this.ws.send(JSON.stringify({users: ids}));
   }
 
   render() {
@@ -135,6 +250,7 @@ class App extends React.Component {
                 headerStyle: {
                   height: getStatusBarHeight() + 70,
                 },
+                gestureEnabled: false,
               })}>
               {props => (
                 <Home
@@ -143,13 +259,21 @@ class App extends React.Component {
                   serverUrl={this.state.serverUrl}
                   userInfo={this.state.userInfo}
                   token={this.state.token}
-                  disconnectServer={this.disconnectServer.bind(this)}
+                  wsConnected={this.state.wsConnected}
                   serverInfo={this.state.serverInfo}
+                  user={this.state.user}
+                  group={this.state.group}
+                  message={this.state.message}
+                  disconnectServer={this.disconnectServer.bind(this)}
                   getServerInfo={this.getServerInfo.bind(this)}
+                  connectWS={this.connectWS.bind(this)}
+                  getUserByID={this.getUserByID.bind(this)}
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen name="Login" options={{headerShown: false}}>
+            <Stack.Screen
+              name="Login"
+              options={{headerShown: false, gestureEnabled: false}}>
               {props => (
                 <Login
                   {...props}

@@ -73,7 +73,7 @@ class Login extends React.Component {
         this.MMKV.setString('token', token);
         this.props.setState({token: token}, () =>
           // navigate to Home page
-          this.props.navigation.navigate('Home'),
+          this.props.navigation.replace('Home'),
         );
       } else {
         Alert.alert('Username or Password is incorrect');
