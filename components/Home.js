@@ -3,15 +3,7 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import MMKVStorage from 'react-native-mmkv-storage';
-import {
-  Alert,
-  ScrollView,
-  Text,
-  View,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import {ScrollView, Text, View, TouchableOpacity, Image} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faUser,
@@ -34,7 +26,7 @@ class Home extends React.Component {
   }
 
   componentDidUpdate() {
-    if (!this.props.token && this.props.wsConnected)
+    if (!this.props.token)
       this.props.setState({wsConnected: false}, () =>
         this.props.navigation.replace('Login'),
       );
@@ -173,12 +165,39 @@ class Home extends React.Component {
               style={{
                 position: 'absolute',
                 right: 0,
-                top: 10,
+                top: 5,
                 fontSize: 12,
                 color: '#8A90D5',
               }}>
               {sendTimeString}
             </Text>
+            {group.unReadMessage ? (
+              <View
+                style={{
+                  backgroundColor: '#8A90D5',
+                  width: 16,
+                  height: 16,
+                  borderRadius: 13,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                }}>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    transform: [{translateX: 0.5}],
+                  }}>
+                  {group.unReadMessage}
+                </Text>
+              </View>
+            ) : (
+              <View />
+            )}
+
             <Text style={{fontWeight: '600', marginBottom: 2}}>
               {groupName}
             </Text>

@@ -3,11 +3,27 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, Text, View, Image} from 'react-native';
+import {ScrollView, Text, View, Image, TouchableOpacity} from 'react-native';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {Button} from 'react-native-elements';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faUser} from '@fortawesome/free-solid-svg-icons';
+import {faUser, faChevronLeft} from '@fortawesome/free-solid-svg-icons';
+
+function SettingsHeaderLeft(props) {
+  return (
+    <TouchableOpacity
+      style={{flexDirection: 'row', alignItems: 'center'}}
+      onPress={props.goBack}>
+      <FontAwesomeIcon
+        icon={faChevronLeft}
+        size={21}
+        style={{marginRight: 5, marginLeft: 10}}
+        color="#6873F2"
+      />
+      <Text style={{fontSize: 18, color: '#6873F2'}}>Home</Text>
+    </TouchableOpacity>
+  );
+}
 
 // Settings Page
 class Settings extends React.Component {
@@ -15,6 +31,14 @@ class Settings extends React.Component {
     super(props);
     this.MMKV = new MMKVStorage.Loader().initialize();
     this.state = {};
+  }
+
+  componentDidMount() {
+    this.props.navigation.setOptions({
+      headerLeft: () => (
+        <SettingsHeaderLeft goBack={() => this.props.navigation.goBack()} />
+      ),
+    });
   }
 
   render() {

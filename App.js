@@ -185,8 +185,8 @@ class App extends React.Component {
     var state = this.state;
 
     // check event and use its handler
-    for (var eventType in data) {
-      for (const [key, handlerFunction] of Object.entries(handler)) {
+    for (let eventType in data) {
+      for (let [key, handlerFunction] of Object.entries(handler)) {
         if (eventType === key) {
           handlerFunction(data[eventType]);
         }
@@ -209,7 +209,7 @@ class App extends React.Component {
 
     // handle reconnect or disconnect
     this.ws.onclose = e => {
-      this.setState({connected: false}, () => {
+      this.setState({wsConnected: false}, () => {
         Alert.alert('Cannot connect to server', '', [
           {
             text: 'Reconnect',
@@ -218,7 +218,7 @@ class App extends React.Component {
               this.setState({wsConnected: true});
             },
           },
-          {text: 'Disconnect', onPress: () => this.disconnectServe()},
+          {text: 'Disconnect', onPress: () => this.disconnectServer()},
         ]);
       });
     };
@@ -230,6 +230,32 @@ class App extends React.Component {
   // get user info via WS
   getUserByID(ids) {
     this.ws.send(JSON.stringify({users: ids}));
+  }
+
+  async getGroupMessageByID(id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[id].isDM ? 'dm' : 'group'
+        }/${id}/messages/?all=true&start=${
+          this.state.message[id] ? this.state.message[id].length : 0
+        }`,
+        {headers: new Headers({Authorization: `token ${this.state.token}`})},
+      );
+      if (!response.ok) throw 'Failed To Get Messages From Server';
+
+      var jsonResult = await response.json();
+      var message = this.state.message;
+      message[id] = message[id]
+        ? [...message[id], ...jsonResult]
+        : [...jsonResult];
+
+      var group = this.state.group;
+      group[id].unReadMessage = null;
+      this.setState({message: message, group: group});
+    } catch (e) {
+      Alert.alert('Failed To Get Messages From Server');
+    }
   }
 
   render() {
@@ -306,12 +332,21 @@ class App extends React.Component {
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen name="Chat">
+            <Stack.Screen
+              name="Chat"
+              options={{
+                headerTitle: '',
+              }}>
               {props => (
                 <Chat
+                  setState={this.setState.bind(this)}
+                  getGroupMessageByID={this.getGroupMessageByID.bind(this)}
                   token={this.state.token}
                   serverUrl={this.state.serverUrl}
-                  setState={this.setState.bind(this)}
+                  group={this.state.group}
+                  user={this.state.user}
+                  message={this.state.message}
+                  userInfo={this.state.userInfo}
                   {...props}
                 />
               )}
