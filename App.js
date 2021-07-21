@@ -341,6 +341,7 @@ class App extends React.Component {
                 <Chat
                   setState={this.setState.bind(this)}
                   getGroupMessageByID={this.getGroupMessageByID.bind(this)}
+                  getUserByID={this.getUserByID.bind(this)}
                   token={this.state.token}
                   serverUrl={this.state.serverUrl}
                   group={this.state.group}

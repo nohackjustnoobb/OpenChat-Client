@@ -87,7 +87,7 @@ class Home extends React.Component {
 
       // handle last message owner
       var messageOwnerView = <View />;
-      if (group.lastMessage && !group.isDM) {
+      if (group.lastMessage) {
         var userID = group.lastMessage.owner;
         if (!this.props.user[userID]) {
           this.props.getUserByID([userID]);
