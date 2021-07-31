@@ -7,11 +7,14 @@ import {
   View,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Image,
   ScrollView,
   TextInput,
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
+  LogBox,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -20,10 +23,19 @@ import {
   faUsers,
   faPlus,
   faPaperPlane,
+  faCamera,
+  faImage,
 } from '@fortawesome/free-solid-svg-icons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {SafeAreaInsetsContext} from 'react-native-safe-area-context';
 import DropShadow from 'react-native-drop-shadow';
+import FitImage from 'react-native-fit-image';
+import ImageView from 'react-native-image-view';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import ModalSelector from 'react-native-modal-selector';
+
+// disable warning from react-native-image-view
+LogBox.ignoreAllLogs();
 
 function ChatHeaderLeft(props) {
   return (
@@ -79,7 +91,15 @@ function ChatHeaderLeft(props) {
 class Chat extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      imageView: '',
+      content: '',
+      imageContent: '',
+      imagePreview: null,
+      messageScrollView: null,
+      imageSelector: false,
+      keyboardHeight: 0,
+    };
   }
 
   componentDidMount() {
@@ -111,18 +131,47 @@ class Chat extends React.Component {
     ) {
       this.props.getGroupMessageByID(group.id);
     }
+
+    this.keyboardDidShowSubscription = Keyboard.addListener(
+      'keyboardWillShow',
+      e => this.setState({keyboardHeight: e.endCoordinates.height}),
+    );
+    this.keyboardDidHideSubscription = Keyboard.addListener(
+      'keyboardWillHide',
+      () => this.setState({keyboardHeight: 0}),
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardDidShowSubscription.remove();
+    this.keyboardDidHideSubscription.remove();
+  }
+
+  getImage(useCamera) {
+    let getMethod = useCamera ? launchCamera : launchImageLibrary;
+    this.setState({imageContent: ''});
+    setTimeout(
+      () =>
+        getMethod({mediaType: 'photo'}, response => {
+          if (response.assets) {
+            this.setState({imagePreview: response.assets[0]});
+          }
+        }),
+      500,
+    );
   }
 
   render() {
-    var messsagesSort = this.props.message[this.props.route.params.group]?.sort(
+    var messagesSort = this.props.message[this.props.route.params.group]?.sort(
       (a, b) => a.id - b.id,
     );
-    var messsagesView = messsagesSort?.map((v, i) => {
+
+    var messagesView = messagesSort?.map((v, i) => {
       if (!this.props.user[v.owner]) this.getUserByID([v.owner]);
       var userDisplay =
         i === 0
           ? 'flex'
-          : v.owner === messsagesSort[i - 1].owner
+          : v.owner === messagesSort[i - 1].owner
           ? 'none'
           : 'flex';
 
@@ -130,13 +179,12 @@ class Chat extends React.Component {
       var newDate = false;
 
       if (i !== 0) {
-        var previousMessageDate = new Date(messsagesSort[i - 1].sendDateTime);
+        var previousMessageDate = new Date(messagesSort[i - 1].sendDateTime);
         newDate =
           messageDate.getUTCFullYear() !==
             previousMessageDate.getUTCFullYear() ||
           messageDate.getUTCMonth() !== previousMessageDate.getUTCMonth() ||
-          messageDate.getUTCDate() !== previousMessageDate.getUTCDate() ||
-          i === 0;
+          messageDate.getUTCDate() !== previousMessageDate.getUTCDate();
       }
 
       return (
@@ -222,7 +270,7 @@ class Chat extends React.Component {
                 }}>
                 <View
                   style={{
-                    padding: 7,
+                    padding: v.additionImage ? 5 : 7,
                     borderRadius: 7,
                     backgroundColor:
                       v.owner === this.props.userInfo.id
@@ -230,16 +278,54 @@ class Chat extends React.Component {
                         : '#6873F2',
                     marginLeft: userDisplay === 'none' ? (newDate ? 0 : 55) : 0,
                     marginRight: newDate ? 70 : 15,
+                    width: v.additionImage
+                      ? Dimensions.get('window').width - 75
+                      : undefined,
+                    paddingBottom: 2,
                   }}>
-                  <Text
-                    style={{
-                      color:
-                        v.owner === this.props.userInfo.id
-                          ? '#000000'
-                          : '#ffffff',
-                    }}>
-                    {v.content}
-                  </Text>
+                  {v.additionImage ? (
+                    <React.Fragment>
+                      <TouchableWithoutFeedback
+                        onPress={() => this.setState({imageView: i})}>
+                        <FitImage
+                          source={{
+                            uri:
+                              this.props.serverUrl?.slice(0, -1) +
+                              v.additionImage,
+                          }}
+                          style={{
+                            marginBottom: 3,
+                            overflow: 'hidden',
+                            borderRadius: 3,
+                          }}
+                          resizeMode="contain"
+                        />
+                      </TouchableWithoutFeedback>
+                    </React.Fragment>
+                  ) : (
+                    <View />
+                  )}
+                  {v.additionFile ? (
+                    <View>
+                      <Text style={{color: 'red'}}>I am File</Text>
+                    </View>
+                  ) : (
+                    <View />
+                  )}
+                  {v.content ? (
+                    <Text
+                      style={{
+                        color:
+                          v.owner === this.props.userInfo.id
+                            ? '#000000'
+                            : '#ffffff',
+                      }}>
+                      {v.content}
+                    </Text>
+                  ) : (
+                    <View />
+                  )}
+
                   <Text
                     style={{
                       fontSize: 10,
@@ -249,6 +335,7 @@ class Chat extends React.Component {
                         v.owner === this.props.userInfo.id
                           ? '#000000'
                           : '#ffffff',
+                      marginTop: 3,
                     }}>
                     {messageDate.toLocaleString('en-US', {
                       hour: 'numeric',
@@ -264,6 +351,48 @@ class Chat extends React.Component {
       );
     });
 
+    // prevent error from ImageView
+    if (!messagesSort) messagesSort = {};
+
+    var additionselectorData = [
+      {
+        key: 0,
+        label: 'Camera',
+        component: (
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <FontAwesomeIcon icon={faCamera} size={21} color="#6873F2" />
+            <Text style={{marginLeft: 10, fontSize: 16, color: '#6873F2'}}>
+              Camera
+            </Text>
+          </View>
+        ),
+        onPress: () => this.getImage(true),
+      },
+      {
+        key: 1,
+        label: 'Image Library',
+        component: (
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <FontAwesomeIcon icon={faImage} size={21} color="#6873F2" />
+            <Text style={{marginLeft: 10, fontSize: 16, color: '#6873F2'}}>
+              Image Library
+            </Text>
+          </View>
+        ),
+        onPress: () => this.getImage(false),
+      },
+    ];
+
     return (
       <SafeAreaView
         style={{flex: 1, backgroundColor: '#ffffff'}}
@@ -272,20 +401,91 @@ class Chat extends React.Component {
           {insets => (
             <KeyboardAvoidingView
               behavior="padding"
+              style={{flex: 1}}
               keyboardVerticalOffset={insets.bottom + 60}
-              style={{flex: 1}}>
+              enabled={!this.state.imageView && !this.state.imagePreview}>
+              <ImageView
+                animationType="fade"
+                images={[
+                  {
+                    source: {
+                      uri: this.state.imageView
+                        ? this.props.serverUrl?.slice(0, -1) +
+                          messagesSort[this.state.imageView]?.additionImage
+                        : this.state.imagePreview?.uri,
+                    },
+                  },
+                ]}
+                isVisible={Boolean(
+                  this.state.imageView || this.state.imagePreview,
+                )}
+                imageIndex={0}
+                isSwipeCloseEnabled={Boolean(this.state.imageView)}
+                onClose={() =>
+                  this.setState({imageView: '', imagePreview: null})
+                }
+                renderFooter={() =>
+                  this.state.imagePreview ? (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        marginBottom: this.state.keyboardHeight
+                          ? this.state.keyboardHeight + 10
+                          : insets.bottom,
+                      }}>
+                      <TextInput
+                        style={{
+                          width: Dimensions.get('window').width * 0.75,
+                          height: 35,
+                          backgroundColor: '#eeeeee',
+                          borderRadius: 10,
+                          padding: 10,
+                        }}
+                        placeholder="Message With Image"
+                        placeholderTextColor="#aaaaaa"
+                        onChangeText={v => this.setState({imageContent: v})}
+                        value={this.state.imageContent}
+                      />
+                      <TouchableOpacity
+                        style={{marginLeft: 10}}
+                        onPress={() => {
+                          var imageContent = this.state.imageContent;
+                          var image = this.state.imagePreview;
+                          this.setState({
+                            imageContent: '',
+                            imagePreview: null,
+                          });
+                          this.props.sendMessage(
+                            this.props.route.params.group,
+                            imageContent,
+                            image,
+                          );
+                        }}>
+                        <FontAwesomeIcon
+                          icon={faPaperPlane}
+                          size={25}
+                          color="#ffffff"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ) : undefined
+                }
+              />
               <ScrollView
                 ref={ref => {
-                  this.scrollView = ref;
+                  this.setState({messageScrollView: ref});
                 }}
                 style={{
                   backgroundColor: '#F9F9F9',
                 }}
                 contentContainerStyle={{paddingVertical: 5}}
                 onContentSizeChange={() =>
-                  this.scrollView.scrollToEnd({animated: false})
+                  this.state.messageScrollView.scrollToEnd({animated: false})
                 }>
-                {messsagesView}
+                {messagesView}
               </ScrollView>
               <View
                 style={{
@@ -298,23 +498,54 @@ class Chat extends React.Component {
                   justifyContent: 'space-around',
                   alignItems: 'center',
                 }}>
-                <FontAwesomeIcon icon={faPlus} size={25} color="#6873F2" />
+                <ModalSelector
+                  data={additionselectorData}
+                  animationType={'fade'}
+                  backdropPressToClose={true}
+                  overlayStyle={{
+                    justifyContent: 'flex-end',
+                    paddingBottom: insets.bottom + 30,
+                  }}
+                  cancelTextStyle={{color: '#ff0000'}}
+                  onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
+                  <FontAwesomeIcon icon={faPlus} size={25} color="#6873F2" />
+                </ModalSelector>
                 <TextInput
                   style={{
                     width: Dimensions.get('window').width * 0.7,
-                    height: 35,
+                    minHeight: 35,
                     backgroundColor: '#eeeeee',
                     borderRadius: 10,
                     padding: 10,
                   }}
                   placeholder="New Message"
                   placeholderTextColor="#aaaaaa"
+                  onChangeText={v => this.setState({content: v})}
+                  value={this.state.content}
+                  onFocus={() =>
+                    setTimeout(
+                      () =>
+                        this.state.messageScrollView.scrollToEnd({
+                          animated: true,
+                        }),
+                      50,
+                    )
+                  }
                 />
-                <FontAwesomeIcon
-                  icon={faPaperPlane}
-                  size={25}
-                  color="#6873F2"
-                />
+                <TouchableOpacity
+                  onPress={() => {
+                    this.props.sendMessage(
+                      this.props.route.params.group,
+                      this.state.content,
+                    );
+                    this.setState({content: ''});
+                  }}>
+                  <FontAwesomeIcon
+                    icon={faPaperPlane}
+                    size={25}
+                    color="#6873F2"
+                  />
+                </TouchableOpacity>
               </View>
             </KeyboardAvoidingView>
           )}

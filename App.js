@@ -3,7 +3,7 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {Text, View, TouchableOpacity, Alert} from 'react-native';
+import {Text, View, TouchableOpacity, Alert, Platform} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import MMKVStorage from 'react-native-mmkv-storage';
@@ -254,7 +254,57 @@ class App extends React.Component {
       group[id].unReadMessage = null;
       this.setState({message: message, group: group});
     } catch (e) {
-      Alert.alert('Failed To Get Messages From Server');
+      Alert.alert('Failed To Get Messages');
+    }
+  }
+
+  async sendMessage(
+    groupID,
+    content = null,
+    additionImage = null,
+    replyID = null,
+  ) {
+    function createFormData(image, body) {
+      const data = new FormData();
+
+      data.append('additionImage', {
+        name: image.fileName,
+        type: image.type,
+        uri:
+          Platform.OS === 'android'
+            ? image.uri
+            : image.uri.replace('file://', ''),
+      });
+
+      Object.keys(body).forEach(key => {
+        data.append(key, body[key]);
+      });
+
+      return data;
+    }
+
+    try {
+      if (!content && !additionImage) return;
+      var sendData = {content: content, replyTo: replyID};
+
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[groupID].isDM ? 'dm' : 'group'
+        }/${groupID}/messages/`,
+        {
+          headers: new Headers({
+            Authorization: `token ${this.state.token}`,
+            'Content-Type': 'application/json',
+          }),
+          method: 'POST',
+          body: additionImage
+            ? createFormData(additionImage, sendData)
+            : JSON.stringify(sendData),
+        },
+      );
+      if (!response.ok) throw response.status;
+    } catch (e) {
+      Alert.alert('Failed To Send Message');
     }
   }
 
@@ -342,7 +392,7 @@ class App extends React.Component {
                   setState={this.setState.bind(this)}
                   getGroupMessageByID={this.getGroupMessageByID.bind(this)}
                   getUserByID={this.getUserByID.bind(this)}
-                  token={this.state.token}
+                  sendMessage={this.sendMessage.bind(this)}
                   serverUrl={this.state.serverUrl}
                   group={this.state.group}
                   user={this.state.user}
