@@ -49,7 +49,9 @@ function ChatHeaderLeft(props) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center'}}>
+      <TouchableOpacity
+        style={{flexDirection: 'row', alignItems: 'center'}}
+        onPress={() => props.groupInfo()}>
         <View
           style={{
             backgroundColor: '#CCCCCC',
@@ -121,6 +123,11 @@ class Chat extends React.Component {
           isDM={group.isDM}
           serverUrl={this.props.serverUrl}
           goBack={() => this.props.navigation.goBack()}
+          groupInfo={() =>
+            this.props.navigation.navigate('GroupInfo', {
+              group: this.props.route.params.group,
+            })
+          }
         />
       ),
     });
@@ -166,8 +173,15 @@ class Chat extends React.Component {
       (a, b) => a.id - b.id,
     );
 
+    if (this.props.group[this.props.route.params.group].unReadMessage) {
+      this.props.setReadByID(this.props.route.params.group);
+      var group = this.props.group;
+      group[this.props.route.params.group].unReadMessage = null;
+      this.props.setState({group: group});
+    }
+
     var messagesView = messagesSort?.map((v, i) => {
-      if (!this.props.user[v.owner]) this.getUserByID([v.owner]);
+      if (!this.props.user[v.owner]) this.props.getUserByID([v.owner]);
       var userDisplay =
         i === 0
           ? 'flex'
@@ -236,7 +250,7 @@ class Chat extends React.Component {
                 overflow: 'hidden',
                 display: newDate ? 'flex' : userDisplay,
               }}>
-              {this.props.user[v.owner].avatar ? (
+              {this.props.user[v.owner]?.avatar ? (
                 <Image
                   source={{
                     uri:

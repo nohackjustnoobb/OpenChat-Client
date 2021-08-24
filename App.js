@@ -6,10 +6,18 @@ import React from 'react';
 import {Text, View, TouchableOpacity, Alert, Platform} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCog, faUserPlus} from '@fortawesome/free-solid-svg-icons';
+import {
+  faCog,
+  faUserPlus,
+  faUserFriends,
+  faBan,
+  faChevronLeft,
+  faSearch,
+} from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
 // components
@@ -17,8 +25,13 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Settings from './components/Settings';
 import Chat from './components/Chat';
+import GroupInfo from './components/GroupInfo';
+import Friends from './components/Friends';
+import Blocked from './components/Blocked';
+import Search from './components/Search';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 // Title
 function HomeHeaderTitle() {
@@ -56,16 +69,43 @@ function HomeHeaderLeft(props) {
   );
 }
 
-// Friends List Button
-function HomeHeaderRight() {
+// Relationship Button
+function HomeHeaderRight(props) {
   return (
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => props.navigation.navigation.navigate('Relationship')}>
       <FontAwesomeIcon
         icon={faUserPlus}
         size={25}
         style={{marginRight: 30}}
         color="#6873F2"
       />
+    </TouchableOpacity>
+  );
+}
+
+function BackHeaderLeft(props) {
+  return (
+    <TouchableOpacity
+      style={{flexDirection: 'row', alignItems: 'center'}}
+      onPress={props.onPress}>
+      <FontAwesomeIcon
+        icon={faChevronLeft}
+        size={21}
+        style={{marginRight: 5, marginLeft: 10}}
+        color="#6873F2"
+      />
+      <Text style={{fontSize: 18, color: '#6873F2'}}>{props.label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function RelationshipHeaderRight(props) {
+  return (
+    <TouchableOpacity
+      style={{flexDirection: 'row', alignItems: 'center', marginRight: 20}}
+      onPress={() => props.navigation.navigation.navigate('Search')}>
+      <FontAwesomeIcon icon={faSearch} size={21} color="#6873F2" />
     </TouchableOpacity>
   );
 }
@@ -90,6 +130,9 @@ class App extends React.Component {
       message: {},
       group: {},
       user: {},
+      blocked: [],
+      friends: [],
+      friendRequest: [],
     };
   }
 
@@ -112,19 +155,28 @@ class App extends React.Component {
   disconnectServer() {
     this.MMKV.removeItem('token');
     this.MMKV.removeItem('serverUrl');
-    this.setState({
-      serverUrl: null,
-      token: null,
-      group: {},
-      message: {},
-      user: {},
-    });
+    this.setState(
+      {
+        serverUrl: null,
+        token: null,
+        group: [],
+        message: {},
+        user: [],
+        friendRequest: [],
+        serverInfo: null,
+        wsConnected: false,
+      },
+      () => this.ws?.close(),
+    );
   }
 
   // clear token
   logout() {
     this.MMKV.removeItem('token');
-    this.setState({token: null, group: {}, message: {}});
+    this.setState(
+      {token: null, group: {}, message: {}, wsConnected: false},
+      () => this.ws?.close(),
+    );
   }
 
   // WS message handler
@@ -169,8 +221,18 @@ class App extends React.Component {
       }
     }
 
+    function groupDeletedHandler(id) {
+      var group = state.group;
+      delete group[id];
+      setState({group: group});
+    }
+
     // decode
     var data = JSON.parse(e.data);
+
+    // variable for functions
+    var setState = this.setState.bind(this);
+    var state = this.state;
 
     // define event and its handler
     var handler = {
@@ -178,11 +240,9 @@ class App extends React.Component {
       group: groupHandler,
       users: usersHandler,
       message: messageHandler,
+      groupDeleted: groupDeletedHandler,
+      relationship: setState,
     };
-
-    // variable for functions
-    var setState = this.setState.bind(this);
-    var state = this.state;
 
     // check event and use its handler
     for (let eventType in data) {
@@ -209,18 +269,20 @@ class App extends React.Component {
 
     // handle reconnect or disconnect
     this.ws.onclose = e => {
-      this.setState({wsConnected: false}, () => {
-        Alert.alert('Cannot connect to server', '', [
-          {
-            text: 'Reconnect',
-            onPress: () => {
-              this.connectWS();
-              this.setState({wsConnected: true});
+      if (this.state.wsConnected) {
+        this.setState({wsConnected: false}, () => {
+          Alert.alert('Cannot connect to server', '', [
+            {
+              text: 'Reconnect',
+              onPress: () => {
+                this.connectWS();
+                this.setState({wsConnected: true});
+              },
             },
-          },
-          {text: 'Disconnect', onPress: () => this.disconnectServer()},
-        ]);
-      });
+            {text: 'Disconnect', onPress: () => this.disconnectServer()},
+          ]);
+        });
+      }
     };
 
     // define WS handler
@@ -308,6 +370,53 @@ class App extends React.Component {
     }
   }
 
+  async setReadByID(id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[id].isDM ? 'dm' : 'group'
+        }/${id}/messages/`,
+        {headers: new Headers({Authorization: `token ${this.state.token}`})},
+      );
+      if (!response.ok) throw 'Failed To Get Messages From Server';
+    } catch (e) {
+      Alert.alert('Failed To Get Messages');
+    }
+  }
+
+  async blockUserByID(id) {
+    console.log('block');
+  }
+
+  async exitGroupByID(id) {
+    try {
+      var response = await fetch(`${this.state.serverUrl}group/${id}/leave/`, {
+        headers: new Headers({Authorization: `token ${this.state.token}`}),
+      });
+      if (!response.ok) throw 'Fail to exit group';
+      var group = this.state.group;
+      delete group[id];
+      this.setState({group: group});
+    } catch (e) {
+      Alert.alert('Fail to exit group');
+    }
+  }
+
+  async deleteGroupByID(id) {
+    try {
+      var response = await fetch(`${this.state.serverUrl}group/${id}/`, {
+        method: 'DELETE',
+        headers: new Headers({Authorization: `token ${this.state.token}`}),
+      });
+      if (!response.ok) throw 'Fail to delete group';
+      var group = this.state.group;
+      delete group[id];
+      this.setState({group: group});
+    } catch (e) {
+      Alert.alert('Fail to delete group');
+    }
+  }
+
   render() {
     return (
       <SafeAreaProvider>
@@ -322,7 +431,9 @@ class App extends React.Component {
                 headerLeft: props => (
                   <HomeHeaderLeft navigation={navigation} {...props} />
                 ),
-                headerRight: props => <HomeHeaderRight {...props} />,
+                headerRight: props => (
+                  <HomeHeaderRight navigation={navigation} {...props} />
+                ),
                 headerStyle: {
                   height: getStatusBarHeight() + 70,
                 },
@@ -364,11 +475,7 @@ class App extends React.Component {
             <Stack.Screen
               name="Settings"
               options={{
-                headerBackTitleStyle: {
-                  color: '#6873F2',
-                },
-                headerTintColor: '#6873F2',
-                headerTitleStyle: {color: '#000000', fontSize: 21},
+                headerLeft: props => <BackHeaderLeft {...props} />,
               }}>
               {props => (
                 <Settings
@@ -393,6 +500,7 @@ class App extends React.Component {
                   getGroupMessageByID={this.getGroupMessageByID.bind(this)}
                   getUserByID={this.getUserByID.bind(this)}
                   sendMessage={this.sendMessage.bind(this)}
+                  setReadByID={this.setReadByID.bind(this)}
                   serverUrl={this.state.serverUrl}
                   group={this.state.group}
                   user={this.state.user}
@@ -401,6 +509,81 @@ class App extends React.Component {
                   {...props}
                 />
               )}
+            </Stack.Screen>
+            <Stack.Screen name="GroupInfo">
+              {props => (
+                <GroupInfo
+                  group={this.state.group}
+                  userInfo={this.state.userInfo}
+                  user={this.state.user}
+                  serverUrl={this.state.serverUrl}
+                  getUserByID={this.getUserByID.bind(this)}
+                  deleteGroupByID={this.deleteGroupByID.bind(this)}
+                  blockUserByID={this.blockUserByID.bind(this)}
+                  exitGroupByID={this.exitGroupByID.bind(this)}
+                  {...props}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Relationship"
+              options={navigation => ({
+                headerLeft: props => <BackHeaderLeft {...props} />,
+                headerRight: props => (
+                  <RelationshipHeaderRight navigation={navigation} {...props} />
+                ),
+              })}>
+              {props => (
+                <Tab.Navigator>
+                  <Tab.Screen
+                    name="Friends"
+                    options={{
+                      headerShown: false,
+                      tabBarActiveTintColor: '#6873F2',
+                      tabBarIcon: iconProps => (
+                        <FontAwesomeIcon icon={faUserFriends} {...iconProps} />
+                      ),
+                    }}>
+                    {tabProps => (
+                      <Friends
+                        friends={this.state.friends}
+                        friendRequest={this.state.friendRequest}
+                        user={this.state.user}
+                        userInfo={this.state.userInfo}
+                        serverUrl={this.state.serverUrl}
+                        getUserByID={this.getUserByID.bind(this)}
+                        {...tabProps}
+                        {...props}
+                      />
+                    )}
+                  </Tab.Screen>
+                  <Tab.Screen
+                    name="Blocked"
+                    options={{
+                      headerShown: false,
+                      tabBarActiveTintColor: '#6873F2',
+                      tabBarIcon: iconProps => (
+                        <FontAwesomeIcon icon={faBan} {...iconProps} />
+                      ),
+                    }}>
+                    {tabProps => (
+                      <Blocked
+                        blocked={this.state.blocked}
+                        user={this.state.user}
+                        serverUrl={this.state.serverUrl}
+                        getUserByID={this.getUserByID.bind(this)}
+                        {...tabProps}
+                        {...props}
+                      />
+                    )}
+                  </Tab.Screen>
+                </Tab.Navigator>
+              )}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Search"
+              options={{headerLeft: props => <BackHeaderLeft {...props} />}}>
+              {props => <Search {...props} />}
             </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>

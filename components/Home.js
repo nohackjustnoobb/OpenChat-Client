@@ -26,10 +26,7 @@ class Home extends React.Component {
   }
 
   componentDidUpdate() {
-    if (!this.props.token)
-      this.props.setState({wsConnected: false}, () =>
-        this.props.navigation.replace('Login'),
-      );
+    if (!this.props.token) this.props.navigation.replace('Login');
   }
 
   render() {
@@ -222,7 +219,9 @@ class Home extends React.Component {
                   </Text>
                 </React.Fragment>
               ) : (
-                <Text style={{fontSize: 12, color: '#8A90D5'}}>
+                <Text
+                  numberOfLines={1}
+                  style={{fontSize: 12, color: '#8A90D5', width: '60%'}}>
                   {group.lastMessage?.content}
                 </Text>
               )}
