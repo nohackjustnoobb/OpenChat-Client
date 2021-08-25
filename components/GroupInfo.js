@@ -64,7 +64,7 @@ class GroupInfo extends React.Component {
 
   ExitGroup() {
     this.props.navigation.pop(2);
-    if (this.group.isDM) return this.props.blockUserByID(this.userID);
+    if (this.group.isDM) return this.props.toggleUserBlock(this.userID);
     return this.group.owner === this.props.userInfo.id
       ? this.props.deleteGroupByID(this.group.id)
       : this.props.exitGroupByID(this.group.id);
@@ -204,7 +204,11 @@ class GroupInfo extends React.Component {
         <Button
           title={
             this.group.isDM
-              ? `Block ${this.props.user[this.userID].username}`
+              ? `${
+                  this.props.blocked.find(v => v === this.userID)
+                    ? 'Unblock'
+                    : 'Block'
+                } ${this.props.user[this.userID].username}`
               : this.group.owner === this.props.userInfo.id
               ? 'Delete Group'
               : 'Exit Group'

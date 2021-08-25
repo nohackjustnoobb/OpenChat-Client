@@ -22,9 +22,11 @@ class Friends extends React.Component {
       var user = [v.fromUser, v.toUser].filter(
         _ => _ !== this.props.userInfo.id,
       );
-      if (!this.props.user[user]) this.props.getUserByID([user]);
+      if (!this.props.user[user]) this.props.getUserByID(user);
       return (
-        <View style={{flexDirection: 'row', alignItems: 'center'}} key={v.id}>
+        <View
+          style={{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}
+          key={`_${v.id}`}>
           <View
             style={{
               backgroundColor: '#CCCCCC',
@@ -36,7 +38,7 @@ class Friends extends React.Component {
               marginRight: 10,
               overflow: 'hidden',
             }}>
-            {this.props.user[user].avatar ? (
+            {this.props.user[user]?.avatar ? (
               <Image
                 source={{
                   uri:
@@ -50,7 +52,7 @@ class Friends extends React.Component {
             )}
           </View>
           <View style={{justifyContent: 'center'}}>
-            <Text>{this.props.user[user].username}</Text>
+            <Text>{this.props.user[user]?.username}</Text>
             <Text style={{color: '#888888', fontSize: 11}}>
               {new Date(v.requestDate).toLocaleString('en-GB')}
             </Text>
@@ -69,17 +71,21 @@ class Friends extends React.Component {
                   borderWidth: 1,
                 }}
                 titleStyle={{color: '#ee5555', fontSize: 14}}
+                onPress={() => this.props.cancelRequest(v.id)}
               />
             ) : (
               <>
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => this.props.replyFriendRequest(v.id, true)}>
                   <FontAwesomeIcon
                     icon={faCheckCircle}
                     color="#55ee55"
                     size={30}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity style={{marginLeft: 10}}>
+                <TouchableOpacity
+                  style={{marginLeft: 10}}
+                  onPress={() => this.props.replyFriendRequest(v.id, false)}>
                   <FontAwesomeIcon
                     icon={faTimesCircle}
                     color="#ee5555"
@@ -96,37 +102,42 @@ class Friends extends React.Component {
     var friendsView = this.props.friends.map(v => {
       if (!this.props.user[v]) this.props.getUserByID([v]);
       return (
-        <View style={{flexDirection: 'row', alignItems: 'center'}} key={v.id}>
-          <View
-            style={{
-              backgroundColor: '#CCCCCC',
-              height: 35,
-              width: 35,
-              borderRadius: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: 10,
-              overflow: 'hidden',
-            }}>
-            {this.props.user[v]?.avatar ? (
-              <Image
-                source={{
-                  uri:
-                    this.props.serverUrl?.slice(0, -1) +
-                    this.props.user[v].avatar,
-                }}
-                style={{height: 35, width: 35}}
-              />
-            ) : (
-              <FontAwesomeIcon icon={faUser} color="#ffffff" size={18} />
-            )}
-          </View>
-          <View style={{justifyContent: 'center', alignContent: 'center'}}>
-            <Text>{this.props.user[v]?.username}</Text>
-            <Text style={{color: '#888888', fontSize: 11}}>
-              {this.props.user[v]?.email}
-            </Text>
-          </View>
+        <View
+          style={{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}
+          key={v.id}>
+          <TouchableOpacity style={{flexDirection: 'row'}}>
+            <View
+              style={{
+                backgroundColor: '#CCCCCC',
+                height: 35,
+                width: 35,
+                borderRadius: 25,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 10,
+                overflow: 'hidden',
+              }}>
+              {this.props.user[v]?.avatar ? (
+                <Image
+                  source={{
+                    uri:
+                      this.props.serverUrl?.slice(0, -1) +
+                      this.props.user[v].avatar,
+                  }}
+                  style={{height: 35, width: 35}}
+                />
+              ) : (
+                <FontAwesomeIcon icon={faUser} color="#ffffff" size={18} />
+              )}
+            </View>
+            <View style={{justifyContent: 'center', alignContent: 'center'}}>
+              <Text>{this.props.user[v]?.username}</Text>
+              <Text style={{color: '#888888', fontSize: 11}}>
+                {this.props.user[v]?.email}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
           <View style={{flexDirection: 'row', position: 'absolute', right: 10}}>
             <Button
               title="Remove"
@@ -140,6 +151,7 @@ class Friends extends React.Component {
                 borderWidth: 1,
               }}
               titleStyle={{color: '#ee5555', fontSize: 14}}
+              onPress={() => this.props.removeFriend(v)}
             />
           </View>
         </View>

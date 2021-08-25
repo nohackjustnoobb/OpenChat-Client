@@ -20,7 +20,11 @@ class Blocked extends React.Component {
           if (!this.props.user[v]) this.props.getUserByID([v]);
           return (
             <View
-              style={{flexDirection: 'row', alignItems: 'center'}}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 5,
+              }}
               key={v.id}>
               <View
                 style={{
@@ -63,6 +67,7 @@ class Blocked extends React.Component {
                     borderWidth: 1,
                   }}
                   titleStyle={{color: '#ee5555', fontSize: 14}}
+                  onPress={() => this.props.toggleUserBlock(v)}
                 />
               </View>
             </View>

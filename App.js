@@ -3,12 +3,21 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {Text, View, TouchableOpacity, Alert, Platform} from 'react-native';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  Modal,
+  Image,
+  TextInput,
+} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MMKVStorage from 'react-native-mmkv-storage';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faCog,
@@ -17,8 +26,11 @@ import {
   faBan,
   faChevronLeft,
   faSearch,
+  faPlus,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
+import {Button, CheckBox} from 'react-native-elements';
 
 // components
 import Home from './components/Home';
@@ -29,6 +41,7 @@ import GroupInfo from './components/GroupInfo';
 import Friends from './components/Friends';
 import Blocked from './components/Blocked';
 import Search from './components/Search';
+import {ScrollView} from 'react-native-gesture-handler';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -102,11 +115,20 @@ function BackHeaderLeft(props) {
 
 function RelationshipHeaderRight(props) {
   return (
-    <TouchableOpacity
-      style={{flexDirection: 'row', alignItems: 'center', marginRight: 20}}
-      onPress={() => props.navigation.navigation.navigate('Search')}>
-      <FontAwesomeIcon icon={faSearch} size={21} color="#6873F2" />
-    </TouchableOpacity>
+    <View style={{flexDirection: 'row'}}>
+      <TouchableOpacity
+        style={{flexDirection: 'row', alignItems: 'center', marginRight: 15}}
+        onPress={() =>
+          props.setState({modal: true, selectedUser: [], next: false})
+        }>
+        <FontAwesomeIcon icon={faPlus} size={21} color="#6873F2" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={{flexDirection: 'row', alignItems: 'center', marginRight: 20}}
+        onPress={() => props.navigation.navigation.navigate('Search')}>
+        <FontAwesomeIcon icon={faSearch} size={21} color="#6873F2" />
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -133,6 +155,11 @@ class App extends React.Component {
       blocked: [],
       friends: [],
       friendRequest: [],
+      searchResult: [],
+      modal: false,
+      selectedUser: [],
+      next: false,
+      groupName: '',
     };
   }
 
@@ -384,10 +411,6 @@ class App extends React.Component {
     }
   }
 
-  async blockUserByID(id) {
-    console.log('block');
-  }
-
   async exitGroupByID(id) {
     try {
       var response = await fetch(`${this.state.serverUrl}group/${id}/leave/`, {
@@ -414,6 +437,114 @@ class App extends React.Component {
       this.setState({group: group});
     } catch (e) {
       Alert.alert('Fail to delete group');
+    }
+  }
+
+  async searchUser(keyword) {
+    if (keyword) {
+      try {
+        var response = await fetch(
+          `${this.state.serverUrl}user/?search=${keyword}`,
+          {headers: new Headers({Authorization: `token ${this.state.token}`})},
+        );
+        if (!response.ok) throw 'Failed To Search';
+
+        this.setState({searchResult: await response.json()});
+      } catch (e) {
+        Alert.alert('Failed To Search');
+      }
+    } else {
+      this.setState({searchResult: []});
+    }
+  }
+
+  async replyFriendRequest(id, accept) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}user/friend-request/${id}/?reply=${
+          accept ? 'accept' : 'decline'
+        }`,
+        {headers: new Headers({Authorization: `token ${this.state.token}`})},
+      );
+      if (!response.ok) throw 'Fail To Reply Friend Request';
+    } catch (e) {
+      Alert.alert('Fail To Reply Friend Request');
+    }
+  }
+
+  async removeFriend(id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}user/${id}/remove-friend/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'DELETE',
+        },
+      );
+      if (!response.ok) throw 'Fail To Remove Friend';
+    } catch (e) {
+      Alert.alert('Fail To Remove Friend');
+    }
+  }
+
+  async sendFriendRequest(id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}user/${id}/create-friend-request/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'POST',
+        },
+      );
+      if (!response.ok) throw 'Fail To Send Friend Request';
+    } catch (e) {
+      Alert.alert('Fail To Send Friend Request');
+    }
+  }
+
+  async cancelRequest(id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}user/friend-request/${id}/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'DELETE',
+        },
+      );
+      if (!response.ok) throw 'Fail To Cancel Friend Request';
+    } catch (e) {
+      Alert.alert('Fail To Cancel Friend Request');
+    }
+  }
+
+  async toggleUserBlock(id) {
+    try {
+      var response = await fetch(`${this.state.serverUrl}user/${id}/block/`, {
+        headers: new Headers({Authorization: `token ${this.state.token}`}),
+        method: this.state.blocked.find(v => v === id) ? 'DELETE' : 'GET',
+      });
+      if (!response.ok) throw 'Fail To Toggle Block';
+    } catch (e) {
+      Alert.alert('Fail To Toggle Block');
+    }
+  }
+
+  async createGroup() {
+    try {
+      var response = await fetch(`${this.state.serverUrl}group/create/`, {
+        headers: new Headers({
+          Authorization: `token ${this.state.token}`,
+          'Content-Type': 'application/json',
+        }),
+        method: 'POST',
+        body: JSON.stringify({
+          members: this.state.selectedUser,
+          groupName: this.state.groupName,
+        }),
+      });
+      if (!response.ok) throw 'Fail To Create Group';
+    } catch (e) {
+      Alert.alert('Fail To Create Group');
     }
   }
 
@@ -517,9 +648,10 @@ class App extends React.Component {
                   userInfo={this.state.userInfo}
                   user={this.state.user}
                   serverUrl={this.state.serverUrl}
+                  blocked={this.state.blocked}
                   getUserByID={this.getUserByID.bind(this)}
                   deleteGroupByID={this.deleteGroupByID.bind(this)}
-                  blockUserByID={this.blockUserByID.bind(this)}
+                  toggleUserBlock={this.toggleUserBlock.bind(this)}
                   exitGroupByID={this.exitGroupByID.bind(this)}
                   {...props}
                 />
@@ -530,60 +662,240 @@ class App extends React.Component {
               options={navigation => ({
                 headerLeft: props => <BackHeaderLeft {...props} />,
                 headerRight: props => (
-                  <RelationshipHeaderRight navigation={navigation} {...props} />
+                  <RelationshipHeaderRight
+                    navigation={navigation}
+                    setState={this.setState.bind(this)}
+                    {...props}
+                  />
                 ),
               })}>
               {props => (
-                <Tab.Navigator>
-                  <Tab.Screen
-                    name="Friends"
-                    options={{
-                      headerShown: false,
-                      tabBarActiveTintColor: '#6873F2',
-                      tabBarIcon: iconProps => (
-                        <FontAwesomeIcon icon={faUserFriends} {...iconProps} />
-                      ),
-                    }}>
-                    {tabProps => (
-                      <Friends
-                        friends={this.state.friends}
-                        friendRequest={this.state.friendRequest}
-                        user={this.state.user}
-                        userInfo={this.state.userInfo}
-                        serverUrl={this.state.serverUrl}
-                        getUserByID={this.getUserByID.bind(this)}
-                        {...tabProps}
-                        {...props}
-                      />
-                    )}
-                  </Tab.Screen>
-                  <Tab.Screen
-                    name="Blocked"
-                    options={{
-                      headerShown: false,
-                      tabBarActiveTintColor: '#6873F2',
-                      tabBarIcon: iconProps => (
-                        <FontAwesomeIcon icon={faBan} {...iconProps} />
-                      ),
-                    }}>
-                    {tabProps => (
-                      <Blocked
-                        blocked={this.state.blocked}
-                        user={this.state.user}
-                        serverUrl={this.state.serverUrl}
-                        getUserByID={this.getUserByID.bind(this)}
-                        {...tabProps}
-                        {...props}
-                      />
-                    )}
-                  </Tab.Screen>
-                </Tab.Navigator>
+                <>
+                  <Modal
+                    visible={this.state.modal}
+                    presentationStyle="formSheet"
+                    animationType="slide"
+                    style={{flex: 1}}>
+                    <SafeAreaView style={{flex: 1}}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                        <Button
+                          title="Cancel"
+                          type="clear"
+                          containerStyle={{marginLeft: 15, marginTop: 10}}
+                          titleStyle={{color: '#ff0000'}}
+                          onPress={() => {
+                            this.setState({
+                              modal: false,
+                              selectedUser: [],
+                              next: false,
+                            });
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '600',
+                          }}>
+                          Add Participants
+                        </Text>
+                        <Button
+                          title={this.state.next ? 'Create' : 'Next'}
+                          type="clear"
+                          containerStyle={{marginRight: 15, marginTop: 10}}
+                          titleStyle={{color: '#6873F2'}}
+                          disabled={!this.state.selectedUser.length}
+                          onPress={() => {
+                            if (this.state.next) {
+                              this.createGroup();
+                              this.setState({
+                                modal: false,
+                                selectedUser: [],
+                                next: false,
+                              });
+                            } else {
+                              this.setState({next: true});
+                            }
+                          }}
+                        />
+                      </View>
+                      {this.state.next ? (
+                        <View style={{flex: 1}}>
+                          <TextInput
+                            style={{
+                              width: '90%',
+                              minHeight: 35,
+                              backgroundColor: '#eeeeee',
+                              borderRadius: 10,
+                              padding: 10,
+                              alignSelf: 'center',
+                              marginTop: 10,
+                            }}
+                            placeholder="Group Name"
+                            placeholderTextColor="#aaaaaa"
+                            onChangeText={v => this.setState({groupName: v})}
+                            value={this.state.groupName}
+                          />
+                        </View>
+                      ) : (
+                        <ScrollView
+                          style={{
+                            flex: 1,
+                            padding: 10,
+                          }}>
+                          {this.state.friends.map(v => (
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                marginBottom: 5,
+                              }}
+                              key={v.id}>
+                              <View
+                                style={{
+                                  backgroundColor: '#CCCCCC',
+                                  height: 35,
+                                  width: 35,
+                                  borderRadius: 25,
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  marginRight: 10,
+                                  overflow: 'hidden',
+                                }}>
+                                {this.state.user[v]?.avatar ? (
+                                  <Image
+                                    source={{
+                                      uri:
+                                        this.state.serverUrl?.slice(0, -1) +
+                                        this.state.user[v].avatar,
+                                    }}
+                                    style={{height: 35, width: 35}}
+                                  />
+                                ) : (
+                                  <FontAwesomeIcon
+                                    icon={faUser}
+                                    color="#ffffff"
+                                    size={18}
+                                  />
+                                )}
+                              </View>
+                              <View
+                                style={{
+                                  justifyContent: 'center',
+                                  alignContent: 'center',
+                                }}>
+                                <Text>{this.state.user[v]?.username}</Text>
+                                <Text style={{color: '#888888', fontSize: 11}}>
+                                  {this.state.user[v]?.email}
+                                </Text>
+                              </View>
+                              <CheckBox
+                                checkedIcon="dot-circle-o"
+                                uncheckedIcon="circle-o"
+                                checkedColor="#6873F2"
+                                containerStyle={{
+                                  position: 'absolute',
+                                  right: -5,
+                                }}
+                                checked={Boolean(
+                                  this.state.selectedUser.find(e => e === v),
+                                )}
+                                onPress={() => {
+                                  var selectedUser = this.state.selectedUser;
+                                  if (
+                                    this.state.selectedUser.find(e => e === v)
+                                  ) {
+                                    selectedUser.pop(v);
+                                  } else {
+                                    selectedUser.push(v);
+                                  }
+                                  this.setState({selectedUser: selectedUser});
+                                }}
+                              />
+                            </View>
+                          ))}
+                        </ScrollView>
+                      )}
+                    </SafeAreaView>
+                  </Modal>
+                  <Tab.Navigator>
+                    <Tab.Screen
+                      name="Friends"
+                      options={{
+                        headerShown: false,
+                        tabBarActiveTintColor: '#6873F2',
+                        tabBarIcon: iconProps => (
+                          <FontAwesomeIcon
+                            icon={faUserFriends}
+                            {...iconProps}
+                          />
+                        ),
+                      }}>
+                      {tabProps => (
+                        <Friends
+                          friends={this.state.friends}
+                          friendRequest={this.state.friendRequest}
+                          user={this.state.user}
+                          userInfo={this.state.userInfo}
+                          serverUrl={this.state.serverUrl}
+                          cancelRequest={this.cancelRequest.bind(this)}
+                          removeFriend={this.removeFriend.bind(this)}
+                          replyFriendRequest={this.replyFriendRequest.bind(
+                            this,
+                          )}
+                          getUserByID={this.getUserByID.bind(this)}
+                          {...tabProps}
+                          {...props}
+                        />
+                      )}
+                    </Tab.Screen>
+                    <Tab.Screen
+                      name="Blocked"
+                      options={{
+                        headerShown: false,
+                        tabBarActiveTintColor: '#6873F2',
+                        tabBarIcon: iconProps => (
+                          <FontAwesomeIcon icon={faBan} {...iconProps} />
+                        ),
+                      }}>
+                      {tabProps => (
+                        <Blocked
+                          blocked={this.state.blocked}
+                          user={this.state.user}
+                          serverUrl={this.state.serverUrl}
+                          toggleUserBlock={this.toggleUserBlock.bind(this)}
+                          getUserByID={this.getUserByID.bind(this)}
+                          {...tabProps}
+                          {...props}
+                        />
+                      )}
+                    </Tab.Screen>
+                  </Tab.Navigator>
+                </>
               )}
             </Stack.Screen>
             <Stack.Screen
               name="Search"
               options={{headerLeft: props => <BackHeaderLeft {...props} />}}>
-              {props => <Search {...props} />}
+              {props => (
+                <Search
+                  friends={this.state.friends}
+                  blocked={this.state.blocked}
+                  friendRequest={this.state.friendRequest}
+                  serverUrl={this.state.serverUrl}
+                  userInfo={this.state.userInfo}
+                  searchResult={this.state.searchResult}
+                  setState={this.setState.bind(this)}
+                  sendFriendRequest={this.sendFriendRequest.bind(this)}
+                  replyFriendRequest={this.replyFriendRequest.bind(this)}
+                  searchUser={this.searchUser.bind(this)}
+                  {...props}
+                />
+              )}
             </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>
