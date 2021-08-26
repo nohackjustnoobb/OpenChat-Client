@@ -298,16 +298,13 @@ class App extends React.Component {
     this.ws.onclose = e => {
       if (this.state.wsConnected) {
         this.setState({wsConnected: false}, () => {
-          Alert.alert('Cannot connect to server', '', [
-            {
-              text: 'Reconnect',
-              onPress: () => {
-                this.connectWS();
-                this.setState({wsConnected: true});
-              },
-            },
-            {text: 'Disconnect', onPress: () => this.disconnectServer()},
-          ]);
+          var reconnect = setInterval(() => {
+            if (this.state.wsConnected) {
+              clearInterval(reconnect);
+            } else {
+              this.connectWS();
+            }
+          }, 3000);
         });
       }
     };
@@ -347,31 +344,31 @@ class App extends React.Component {
     }
   }
 
+  createFormData(image, body, name) {
+    const data = new FormData();
+
+    data.append(name, {
+      name: image.fileName,
+      type: image.type,
+      uri:
+        Platform.OS === 'android'
+          ? image.uri
+          : image.uri.replace('file://', ''),
+    });
+
+    Object.keys(body).forEach(key => {
+      data.append(key, body[key]);
+    });
+
+    return data;
+  }
+
   async sendMessage(
     groupID,
     content = null,
     additionImage = null,
     replyID = null,
   ) {
-    function createFormData(image, body) {
-      const data = new FormData();
-
-      data.append('additionImage', {
-        name: image.fileName,
-        type: image.type,
-        uri:
-          Platform.OS === 'android'
-            ? image.uri
-            : image.uri.replace('file://', ''),
-      });
-
-      Object.keys(body).forEach(key => {
-        data.append(key, body[key]);
-      });
-
-      return data;
-    }
-
     try {
       if (!content && !additionImage) return;
       var sendData = {content: content, replyTo: replyID};
@@ -387,7 +384,7 @@ class App extends React.Component {
           }),
           method: 'POST',
           body: additionImage
-            ? createFormData(additionImage, sendData)
+            ? this.createFormData(additionImage, sendData, 'additionImage')
             : JSON.stringify(sendData),
         },
       );
@@ -529,6 +526,59 @@ class App extends React.Component {
     }
   }
 
+  async patchUserInfo(username, bio, avatar) {
+    try {
+      var patchData = {username: username, bio: bio};
+      for (var i in patchData) {
+        if (i === 'username' && patchData[i] === this.state.userInfo.username) {
+          delete patchData[i];
+        }
+        if (i === 'bio' && patchData[i] === this.state.userInfo.bio) {
+          delete patchData[i];
+        }
+      }
+      var response = await fetch(`${this.state.serverUrl}user/me/`, {
+        headers: new Headers({
+          Authorization: `token ${this.state.token}`,
+          'Content-Type': 'application/json',
+        }),
+        method: 'PATCH',
+        body: avatar
+          ? this.createFormData(avatar, patchData, 'avatar')
+          : JSON.stringify(patchData),
+      });
+      if (!response.ok) throw 'Fail To Update User Info';
+
+      var userInfo = await response.json();
+      this.setState({userInfo: userInfo});
+      return userInfo;
+    } catch (e) {
+      Alert.alert('Fail To Update User Info');
+    }
+  }
+
+  async patchGroupInfo(id, groupName, avatar) {
+    try {
+      var patchData = groupName ? {groupName: groupName} : {};
+
+      var response = await fetch(`${this.state.serverUrl}group/${id}/`, {
+        headers: new Headers({
+          Authorization: `token ${this.state.token}`,
+          'Content-Type': 'application/json',
+        }),
+        method: 'PATCH',
+        body: avatar
+          ? this.createFormData(avatar, patchData, 'avatar')
+          : JSON.stringify(patchData),
+      });
+
+      if (!response.ok) throw 'Fail To Update Group Info';
+      return await response.json();
+    } catch (e) {
+      Alert.alert('Fail To Update Group Info');
+    }
+  }
+
   async createGroup() {
     try {
       var response = await fetch(`${this.state.serverUrl}group/create/`, {
@@ -545,6 +595,100 @@ class App extends React.Component {
       if (!response.ok) throw 'Fail To Create Group';
     } catch (e) {
       Alert.alert('Fail To Create Group');
+    }
+  }
+
+  async createDM(id) {
+    try {
+      var response = await fetch(`${this.state.serverUrl}dm/create/`, {
+        headers: new Headers({
+          Authorization: `token ${this.state.token}`,
+          'Content-Type': 'application/json',
+        }),
+        method: 'POST',
+        body: JSON.stringify({
+          friend: id,
+        }),
+      });
+
+      if (!response.ok) throw 'Fail To Create DM';
+      return await response.json();
+    } catch (e) {
+      Alert.alert('Fail To Create DM');
+    }
+  }
+
+  async toggleAdmin(groupID, userID) {
+    try {
+      if (this.state.group[groupID].groupAdmins.find(e => userID === e)) {
+        var response = await fetch(
+          `${this.state.serverUrl}group/${groupID}/admins/${userID}/`,
+          {
+            headers: new Headers({
+              Authorization: `token ${this.state.token}`,
+            }),
+            method: 'DELETE',
+          },
+        );
+      } else {
+        var response = await fetch(
+          `${this.state.serverUrl}group/${groupID}/admins/`,
+          {
+            headers: new Headers({
+              Authorization: `token ${this.state.token}`,
+              'Content-Type': 'application/json',
+            }),
+            method: 'POST',
+            body: JSON.stringify({
+              admins: [userID],
+            }),
+          },
+        );
+      }
+
+      if (!response.ok) throw 'Fail To Toggle Admin';
+    } catch (e) {
+      Alert.alert('Fail To Toggle Admin');
+    }
+  }
+
+  async kickUser(groupID, userID) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}group/${groupID}/members/${userID}/`,
+        {
+          headers: new Headers({
+            Authorization: `token ${this.state.token}`,
+          }),
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) throw 'Fail To Kick User';
+    } catch (e) {
+      Alert.alert('Fail To Kick User');
+    }
+  }
+
+  async addUsers(groupID, usersID) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}group/${groupID}/members/`,
+        {
+          headers: new Headers({
+            Authorization: `token ${this.state.token}`,
+            'Content-Type': 'application/json',
+          }),
+          method: 'POST',
+          body: JSON.stringify({
+            members: usersID,
+          }),
+        },
+      );
+
+      if (!response.ok) throw 'Fail To Add Users';
+    } catch (e) {
+      Alert.alert('Fail To Add Users');
     }
   }
 
@@ -613,6 +757,7 @@ class App extends React.Component {
                   userInfo={this.state.userInfo}
                   serverInfo={this.state.serverInfo}
                   serverUrl={this.state.serverUrl}
+                  patchUserInfo={this.patchUserInfo.bind(this)}
                   setState={this.setState.bind(this)}
                   disconnectServer={this.disconnectServer.bind(this)}
                   logout={this.logout.bind(this)}
@@ -648,11 +793,16 @@ class App extends React.Component {
                   userInfo={this.state.userInfo}
                   user={this.state.user}
                   serverUrl={this.state.serverUrl}
+                  friends={this.state.friends}
                   blocked={this.state.blocked}
+                  patchGroupInfo={this.patchGroupInfo.bind(this)}
                   getUserByID={this.getUserByID.bind(this)}
                   deleteGroupByID={this.deleteGroupByID.bind(this)}
                   toggleUserBlock={this.toggleUserBlock.bind(this)}
                   exitGroupByID={this.exitGroupByID.bind(this)}
+                  toggleAdmin={this.toggleAdmin.bind(this)}
+                  kickUser={this.kickUser.bind(this)}
+                  addUsers={this.addUsers.bind(this)}
                   {...props}
                 />
               )}
@@ -711,12 +861,16 @@ class App extends React.Component {
                           disabled={!this.state.selectedUser.length}
                           onPress={() => {
                             if (this.state.next) {
-                              this.createGroup();
-                              this.setState({
-                                modal: false,
-                                selectedUser: [],
-                                next: false,
-                              });
+                              if (this.state.groupName) {
+                                this.createGroup();
+                                this.setState({
+                                  modal: false,
+                                  selectedUser: [],
+                                  next: false,
+                                });
+                              } else {
+                                Alert.alert('Please enter group name');
+                              }
                             } else {
                               this.setState({next: true});
                             }
@@ -847,6 +1001,8 @@ class App extends React.Component {
                           replyFriendRequest={this.replyFriendRequest.bind(
                             this,
                           )}
+                          toggleUserBlock={this.toggleUserBlock.bind(this)}
+                          createDM={this.createDM.bind(this)}
                           getUserByID={this.getUserByID.bind(this)}
                           {...tabProps}
                           {...props}

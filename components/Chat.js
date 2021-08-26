@@ -26,8 +26,10 @@ import {
   faCamera,
   faImage,
 } from '@fortawesome/free-solid-svg-icons';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {SafeAreaInsetsContext} from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  SafeAreaInsetsContext,
+} from 'react-native-safe-area-context';
 import DropShadow from 'react-native-drop-shadow';
 import FitImage from 'react-native-fit-image';
 import ImageView from 'react-native-image-view';
@@ -448,7 +450,9 @@ class Chat extends React.Component {
                         alignSelf: 'center',
                         marginBottom: this.state.keyboardHeight
                           ? this.state.keyboardHeight + 10
-                          : insets.bottom,
+                          : insets.bottom
+                          ? insets.bottom
+                          : 20,
                       }}>
                       <TextInput
                         style={{

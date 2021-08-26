@@ -3,18 +3,27 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, View, Text, Image, TouchableOpacity} from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faUser,
   faTimesCircle,
   faCheckCircle,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import {Button} from 'react-native-elements';
 
 class Friends extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {modal: null};
   }
 
   render() {
@@ -105,7 +114,9 @@ class Friends extends React.Component {
         <View
           style={{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}
           key={v.id}>
-          <TouchableOpacity style={{flexDirection: 'row'}}>
+          <TouchableOpacity
+            style={{flexDirection: 'row'}}
+            onPress={() => this.setState({modal: v})}>
             <View
               style={{
                 backgroundColor: '#CCCCCC',
@@ -160,6 +171,97 @@ class Friends extends React.Component {
 
     return (
       <ScrollView style={{backgroundColor: '#F9F9F9', padding: 10}}>
+        <Modal
+          visible={Boolean(this.state.modal)}
+          presentationStyle="formSheet"
+          animationType="slide">
+          <TouchableOpacity
+            onPress={() => this.setState({modal: null})}
+            style={{position: 'absolute', right: 15, top: 15, zIndex: 1}}>
+            <FontAwesomeIcon icon={faTimes} color="#ff0000" size={26} />
+          </TouchableOpacity>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignContent: 'center',
+              marginBottom: 100,
+            }}>
+            <View
+              style={{
+                backgroundColor: '#CCCCCC',
+                height: 150,
+                width: 150,
+                borderRadius: 75,
+                justifyContent: 'center',
+                alignItems: 'center',
+                alignSelf: 'center',
+                overflow: 'hidden',
+              }}>
+              {this.props.user[this.state.modal]?.avatar ? (
+                <Image
+                  source={{
+                    uri:
+                      this.props.serverUrl?.slice(0, -1) +
+                      this.props.user[this.state.modal].avatar,
+                  }}
+                  style={{height: 150, width: 150}}
+                />
+              ) : (
+                <FontAwesomeIcon icon={faUser} color="#ffffff" size={75} />
+              )}
+            </View>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: '600',
+                textAlign: 'center',
+                marginTop: 10,
+              }}>
+              {this.props.user[this.state.modal]?.username}
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                textAlign: 'center',
+                color: '#888888',
+              }}>
+              {this.props.user[this.state.modal]?.email}
+            </Text>
+            <View style={{marginTop: 20}}>
+              <Button
+                type="clear"
+                titleStyle={{color: '#6873F2'}}
+                title={`Message ${this.props.user[this.state.modal]?.username}`}
+                onPress={async () => {
+                  var group = await this.props.createDM(this.state.modal);
+                  this.setState({modal: null});
+                  this.props.navigation.navigate('Chat', {group: group.id});
+                }}
+              />
+              <Button
+                type="clear"
+                titleStyle={{color: '#ff0000', fontWeight: '600'}}
+                title={`Unfriend ${
+                  this.props.user[this.state.modal]?.username
+                }`}
+                onPress={() => {
+                  this.props.removeFriend(this.state.modal);
+                  this.setState({modal: null});
+                }}
+              />
+              <Button
+                type="clear"
+                titleStyle={{color: '#ff0000', fontWeight: '600'}}
+                title={`Block ${this.props.user[this.state.modal]?.username}`}
+                onPress={() => {
+                  this.props.toggleUserBlock(this.state.modal);
+                  this.setState({modal: null});
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
         {this.props.friendRequest.length ? (
           <>
             <Text>Friend Request</Text>
