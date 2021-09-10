@@ -188,42 +188,55 @@ class GroupInfo extends React.Component {
                     : ''}
                 </Text>
               </View>
-              <View
-                style={{
-                  backgroundColor: '#eeeeee',
-                  height: 1,
-                  width: '100%',
-                  alignSelf: 'center',
-                }}
-              />
+              {!(
+                this.group.groupAdmins.find(
+                  id => id === this.props.userInfo.id,
+                ) || this.group.owner === this.props.userInfo.id
+              ) && i === this.group.members.length - 1 ? (
+                <></>
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: '#eeeeee',
+                    height: 1,
+                    width: '100%',
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
             </ModalSelector>
           )}
         </SafeAreaInsetsContext.Consumer>
       );
     });
 
-    membersList.push(
-      <TouchableOpacity
-        style={{
-          marginVertical: 10,
-          marginHorizontal: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        onPress={() => this.setState({addUsers: true})}>
-        <FontAwesomeIcon icon={faPlus} color="#6873F2" size={22} />
-        <Text
+    if (
+      this.group.groupAdmins.find(id => id === this.props.userInfo.id) ||
+      this.group.owner === this.props.userInfo.id
+    ) {
+      membersList.push(
+        <TouchableOpacity
           style={{
-            color: '#6873F2',
-            fontWeight: '600',
-            fontSize: 16,
-            marginLeft: 5,
-          }}>
-          Add Participants
-        </Text>
-      </TouchableOpacity>,
-    );
+            marginVertical: 10,
+            marginHorizontal: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => this.setState({addUsers: true})}>
+          <FontAwesomeIcon icon={faPlus} color="#6873F2" size={22} />
+          <Text
+            style={{
+              color: '#6873F2',
+              fontWeight: '600',
+              fontSize: 16,
+              marginLeft: 5,
+            }}>
+            Add Participants
+          </Text>
+        </TouchableOpacity>,
+      );
+    }
 
     return (
       <ScrollView style={{backgroundColor: '#F9F9F9'}}>
@@ -559,7 +572,30 @@ class GroupInfo extends React.Component {
             }}
             buttonStyle={{backgroundColor: '#ffffff'}}
             titleStyle={{color: '#ff0000'}}
-            onPress={() => this.ExitGroup()}
+            onPress={() =>
+              Alert.alert(
+                `${
+                  this.group.isDM
+                    ? `${
+                        this.props.blocked.find(v => v === this.userID)
+                          ? 'Unblock'
+                          : 'Block'
+                      } ${this.props.user[this.userID].username}`
+                    : this.group.owner === this.props.userInfo.id
+                    ? 'Delete Group'
+                    : 'Exit Group'
+                } ?`,
+                undefined,
+                [
+                  {text: 'Cancel', style: 'cancel'},
+                  {
+                    text: 'Yes',
+                    style: 'destructive',
+                    onPress: () => this.ExitGroup(),
+                  },
+                ],
+              )
+            }
           />
         </SafeAreaView>
       </ScrollView>

@@ -12,6 +12,7 @@ import {
   Modal,
   Image,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
@@ -47,22 +48,33 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Title
-function HomeHeaderTitle() {
+function HomeHeaderTitle(props) {
   return (
     <View>
-      <View style={{alignItems: 'center'}}>
-        <Text style={{fontSize: 21, fontWeight: '600'}}>
-          <Text style={{color: '#6873F2'}}>Open</Text>Chat
-        </Text>
+      {props.wsConnected ? (
+        <View style={{alignItems: 'center'}}>
+          <Text style={{fontSize: 21, fontWeight: '600'}}>
+            <Text style={{color: '#6873F2'}}>Open</Text>Chat
+          </Text>
+          <View
+            style={{
+              height: 2,
+              width: 80,
+              backgroundColor: 'black',
+              marginTop: 2,
+            }}
+          />
+        </View>
+      ) : (
         <View
           style={{
-            height: 2,
-            width: 80,
-            backgroundColor: 'black',
-            marginTop: 2,
-          }}
-        />
-      </View>
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+          <ActivityIndicator size="small" style={{marginRight: 5}} />
+          <Text style={{color: '#555555', fontSize: 18}}>Connecting...</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -702,7 +714,12 @@ class App extends React.Component {
             <Stack.Screen
               name="Home"
               options={navigation => ({
-                headerTitle: props => <HomeHeaderTitle {...props} />,
+                headerTitle: props => (
+                  <HomeHeaderTitle
+                    wsConnected={this.state.wsConnected}
+                    {...props}
+                  />
+                ),
                 headerLeft: props => (
                   <HomeHeaderLeft navigation={navigation} {...props} />
                 ),
