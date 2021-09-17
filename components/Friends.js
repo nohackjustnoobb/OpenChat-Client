@@ -3,20 +3,12 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
+import {ScrollView, View, Text, Image, TouchableOpacity} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faUser,
   faTimesCircle,
   faCheckCircle,
-  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import {Button} from 'react-native-elements';
 import ModalSelector from 'react-native-modal-selector';
