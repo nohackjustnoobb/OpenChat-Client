@@ -19,6 +19,8 @@ import {
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import {Button} from 'react-native-elements';
+import ModalSelector from 'react-native-modal-selector';
+import {SafeAreaInsetsContext} from 'react-native-safe-area-context';
 
 class Friends extends React.Component {
   constructor(props) {
@@ -108,46 +110,153 @@ class Friends extends React.Component {
       );
     });
 
+    let key = 0;
+    var friendsData = [
+      {
+        key: key++,
+        label: 'userInfo',
+        section: true,
+        component: (
+          <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <View
+              style={{
+                backgroundColor: '#CCCCCC',
+                height: 40,
+                width: 40,
+                borderRadius: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+                alignSelf: 'center',
+                overflow: 'hidden',
+              }}>
+              {this.props.user[this.state.modal]?.avatar ? (
+                <Image
+                  source={{
+                    uri:
+                      this.props.serverUrl?.slice(0, -1) +
+                      this.props.user[this.state.modal].avatar,
+                  }}
+                  style={{height: 40, width: 40}}
+                />
+              ) : (
+                <FontAwesomeIcon icon={faUser} color="#ffffff" size={20} />
+              )}
+            </View>
+            <View style={{marginLeft: 10, alignSelf: 'center'}}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                }}>
+                {this.props.user[this.state.modal]?.username}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: '#888888',
+                }}>
+                {this.props.user[this.state.modal]?.email}
+              </Text>
+            </View>
+          </View>
+        ),
+      },
+      {
+        key: key++,
+        label: `Message ${this.props.user[this.state.modal]?.username}`,
+        onPress: async () => {
+          var group = await this.props.createDM(this.state.modal);
+          this.setState({modal: null});
+          this.props.navigation.navigate('Chat', {group: group.id});
+        },
+      },
+      {
+        key: key++,
+        label: 'Unfriend',
+        component: (
+          <Text style={{textAlign: 'center', color: '#ff0000', fontSize: 16}}>
+            {`Unfriend ${this.props.user[this.state.modal]?.username}`}
+          </Text>
+        ),
+        onPress: () => {
+          this.props.removeFriend(this.state.modal);
+          this.setState({modal: null});
+        },
+      },
+      {
+        key: key++,
+        label: 'Block',
+        component: (
+          <Text style={{textAlign: 'center', color: '#ff0000', fontSize: 16}}>
+            {`Block ${this.props.user[this.state.modal]?.username}`}
+          </Text>
+        ),
+        onPress: () => {
+          this.props.toggleUserBlock(this.state.modal);
+          this.setState({modal: null});
+        },
+      },
+    ];
+
     var friendsView = this.props.friends.map(v => {
       if (!this.props.user[v]) this.props.getUserByID([v]);
       return (
         <View
           style={{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}
           key={v.id}>
-          <TouchableOpacity
-            style={{flexDirection: 'row'}}
-            onPress={() => this.setState({modal: v})}>
-            <View
-              style={{
-                backgroundColor: '#CCCCCC',
-                height: 35,
-                width: 35,
-                borderRadius: 25,
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginRight: 10,
-                overflow: 'hidden',
-              }}>
-              {this.props.user[v]?.avatar ? (
-                <Image
-                  source={{
-                    uri:
-                      this.props.serverUrl?.slice(0, -1) +
-                      this.props.user[v].avatar,
-                  }}
-                  style={{height: 35, width: 35}}
-                />
-              ) : (
-                <FontAwesomeIcon icon={faUser} color="#ffffff" size={18} />
-              )}
-            </View>
-            <View style={{justifyContent: 'center', alignContent: 'center'}}>
-              <Text>{this.props.user[v]?.username}</Text>
-              <Text style={{color: '#888888', fontSize: 11}}>
-                {this.props.user[v]?.email}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <SafeAreaInsetsContext.Consumer>
+            {insets => (
+              <ModalSelector
+                data={friendsData}
+                animationType={'fade'}
+                backdropPressToClose={true}
+                onModalOpen={() => this.setState({modal: v})}
+                overlayStyle={{
+                  justifyContent: 'flex-end',
+                  paddingBottom: insets.bottom + 30,
+                }}
+                cancelTextStyle={{color: '#ff0000'}}
+                onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
+                <View style={{flexDirection: 'row'}}>
+                  <View
+                    style={{
+                      backgroundColor: '#CCCCCC',
+                      height: 35,
+                      width: 35,
+                      borderRadius: 25,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginRight: 10,
+                      overflow: 'hidden',
+                    }}>
+                    {this.props.user[v]?.avatar ? (
+                      <Image
+                        source={{
+                          uri:
+                            this.props.serverUrl?.slice(0, -1) +
+                            this.props.user[v].avatar,
+                        }}
+                        style={{height: 35, width: 35}}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={faUser}
+                        color="#ffffff"
+                        size={18}
+                      />
+                    )}
+                  </View>
+                  <View
+                    style={{justifyContent: 'center', alignContent: 'center'}}>
+                    <Text>{this.props.user[v]?.username}</Text>
+                    <Text style={{color: '#888888', fontSize: 11}}>
+                      {this.props.user[v]?.email}
+                    </Text>
+                  </View>
+                </View>
+              </ModalSelector>
+            )}
+          </SafeAreaInsetsContext.Consumer>
 
           <View style={{flexDirection: 'row', position: 'absolute', right: 10}}>
             <Button
@@ -171,97 +280,6 @@ class Friends extends React.Component {
 
     return (
       <ScrollView style={{backgroundColor: '#F9F9F9', padding: 10}}>
-        <Modal
-          visible={Boolean(this.state.modal)}
-          presentationStyle="formSheet"
-          animationType="slide">
-          <TouchableOpacity
-            onPress={() => this.setState({modal: null})}
-            style={{position: 'absolute', right: 15, top: 15, zIndex: 1}}>
-            <FontAwesomeIcon icon={faTimes} color="#ff0000" size={26} />
-          </TouchableOpacity>
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignContent: 'center',
-              marginBottom: 100,
-            }}>
-            <View
-              style={{
-                backgroundColor: '#CCCCCC',
-                height: 150,
-                width: 150,
-                borderRadius: 75,
-                justifyContent: 'center',
-                alignItems: 'center',
-                alignSelf: 'center',
-                overflow: 'hidden',
-              }}>
-              {this.props.user[this.state.modal]?.avatar ? (
-                <Image
-                  source={{
-                    uri:
-                      this.props.serverUrl?.slice(0, -1) +
-                      this.props.user[this.state.modal].avatar,
-                  }}
-                  style={{height: 150, width: 150}}
-                />
-              ) : (
-                <FontAwesomeIcon icon={faUser} color="#ffffff" size={75} />
-              )}
-            </View>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: '600',
-                textAlign: 'center',
-                marginTop: 10,
-              }}>
-              {this.props.user[this.state.modal]?.username}
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                textAlign: 'center',
-                color: '#888888',
-              }}>
-              {this.props.user[this.state.modal]?.email}
-            </Text>
-            <View style={{marginTop: 20}}>
-              <Button
-                type="clear"
-                titleStyle={{color: '#6873F2'}}
-                title={`Message ${this.props.user[this.state.modal]?.username}`}
-                onPress={async () => {
-                  var group = await this.props.createDM(this.state.modal);
-                  this.setState({modal: null});
-                  this.props.navigation.navigate('Chat', {group: group.id});
-                }}
-              />
-              <Button
-                type="clear"
-                titleStyle={{color: '#ff0000', fontWeight: '600'}}
-                title={`Unfriend ${
-                  this.props.user[this.state.modal]?.username
-                }`}
-                onPress={() => {
-                  this.props.removeFriend(this.state.modal);
-                  this.setState({modal: null});
-                }}
-              />
-              <Button
-                type="clear"
-                titleStyle={{color: '#ff0000', fontWeight: '600'}}
-                title={`Block ${this.props.user[this.state.modal]?.username}`}
-                onPress={() => {
-                  this.props.toggleUserBlock(this.state.modal);
-                  this.setState({modal: null});
-                }}
-              />
-            </View>
-          </View>
-        </Modal>
         {this.props.friendRequest.length ? (
           <>
             <Text>Friend Request</Text>

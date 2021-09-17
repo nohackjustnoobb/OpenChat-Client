@@ -29,9 +29,11 @@ import {
   faSearch,
   faPlus,
   faUser,
+  faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 import {Button, CheckBox} from 'react-native-elements';
+import {launchImageLibrary} from 'react-native-image-picker';
 
 // components
 import Home from './components/Home';
@@ -172,6 +174,7 @@ class App extends React.Component {
       selectedUser: [],
       next: false,
       groupName: '',
+      groupAvatar: null,
     };
   }
 
@@ -593,16 +596,20 @@ class App extends React.Component {
 
   async createGroup() {
     try {
+      var bodyData = {
+        members: this.state.selectedUser.join(),
+        groupName: this.state.groupName,
+      };
+
       var response = await fetch(`${this.state.serverUrl}group/create/`, {
         headers: new Headers({
           Authorization: `token ${this.state.token}`,
           'Content-Type': 'application/json',
         }),
         method: 'POST',
-        body: JSON.stringify({
-          members: this.state.selectedUser,
-          groupName: this.state.groupName,
-        }),
+        body: this.state.groupAvatar
+          ? this.createFormData(this.state.groupAvatar, bodyData, 'avatar')
+          : JSON.stringify(bodyData),
       });
       if (!response.ok) throw 'Fail To Create Group';
     } catch (e) {
@@ -860,6 +867,8 @@ class App extends React.Component {
                               modal: false,
                               selectedUser: [],
                               next: false,
+                              groupAvatar: null,
+                              groupName: '',
                             });
                           }}
                         />
@@ -884,6 +893,8 @@ class App extends React.Component {
                                   modal: false,
                                   selectedUser: [],
                                   next: false,
+                                  groupAvatar: null,
+                                  groupName: '',
                                 });
                               } else {
                                 Alert.alert('Please enter group name');
@@ -896,6 +907,44 @@ class App extends React.Component {
                       </View>
                       {this.state.next ? (
                         <View style={{flex: 1}}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              launchImageLibrary(
+                                {mediaType: 'photo'},
+                                response => {
+                                  if (!response.didCancel)
+                                    this.setState({
+                                      groupAvatar: response.assets[0],
+                                    });
+                                },
+                              );
+                            }}
+                            style={{
+                              backgroundColor: '#CCCCCC',
+                              height: 150,
+                              width: 150,
+                              borderRadius: 75,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              alignSelf: 'center',
+                              margin: 20,
+                              overflow: 'hidden',
+                            }}>
+                            {this.state.groupAvatar ? (
+                              <Image
+                                source={{
+                                  uri: this.state.groupAvatar.uri,
+                                }}
+                                style={{height: 150, width: 150}}
+                              />
+                            ) : (
+                              <FontAwesomeIcon
+                                icon={faUsers}
+                                color="#ffffff"
+                                size={75}
+                              />
+                            )}
+                          </TouchableOpacity>
                           <TextInput
                             style={{
                               width: '90%',
