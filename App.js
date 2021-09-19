@@ -1126,4 +1126,5 @@ class App extends React.Component {
   }
 }
 
+export {BackHeaderLeft};
 export default App;

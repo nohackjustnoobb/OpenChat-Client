@@ -2,6 +2,8 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 
+//TODO: change ImageView Package
+
 import React from 'react';
 import {
   View,

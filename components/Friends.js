@@ -3,7 +3,14 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, View, Text, Image, TouchableOpacity} from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faUser,
@@ -170,10 +177,22 @@ class Friends extends React.Component {
             {`Unfriend ${this.props.user[this.state.modal]?.username}`}
           </Text>
         ),
-        onPress: () => {
-          this.props.removeFriend(this.state.modal);
-          this.setState({modal: null});
-        },
+        onPress: () =>
+          Alert.alert(
+            `Unfriend ${this.props.user[this.state.modal]?.username} ?`,
+            undefined,
+            [
+              {text: 'Cancel', style: 'cancel'},
+              {
+                text: 'Yes',
+                style: 'destructive',
+                onPress: () => {
+                  this.props.removeFriend(this.state.modal);
+                  this.setState({modal: null});
+                },
+              },
+            ],
+          ),
       },
       {
         key: key++,
@@ -183,10 +202,22 @@ class Friends extends React.Component {
             {`Block ${this.props.user[this.state.modal]?.username}`}
           </Text>
         ),
-        onPress: () => {
-          this.props.toggleUserBlock(this.state.modal);
-          this.setState({modal: null});
-        },
+        onPress: () =>
+          Alert.alert(
+            `Block ${this.props.user[this.state.modal]?.username} ?`,
+            undefined,
+            [
+              {text: 'Cancel', style: 'cancel'},
+              {
+                text: 'Yes',
+                style: 'destructive',
+                onPress: () => {
+                  this.props.toggleUserBlock(this.state.modal);
+                  this.setState({modal: null});
+                },
+              },
+            ],
+          ),
       },
     ];
 
