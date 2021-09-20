@@ -12,6 +12,7 @@ import {
   Modal,
   Image,
   TextInput,
+  LogBox,
   ActivityIndicator,
 } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
@@ -45,6 +46,9 @@ import Friends from './components/Friends';
 import Blocked from './components/Blocked';
 import Search from './components/Search';
 import {ScrollView} from 'react-native-gesture-handler';
+
+// disable warning
+LogBox.ignoreAllLogs();
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

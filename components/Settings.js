@@ -119,7 +119,7 @@ class Settings extends React.Component {
           imageIndex={0}
           backgroundColor="#ffffff"
           visible={this.state.avatarView}
-          HeaderComponent={props => (
+          HeaderComponent={() => (
             <SafeAreaView
               style={{flexDirection: 'row', justifyContent: 'space-between'}}>
               <TouchableOpacity

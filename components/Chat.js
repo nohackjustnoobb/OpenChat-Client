@@ -2,8 +2,6 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 
-//TODO: change ImageView Package
-
 import React from 'react';
 import {
   View,
@@ -16,7 +14,7 @@ import {
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
-  LogBox,
+  Modal,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -34,12 +32,9 @@ import {
 } from 'react-native-safe-area-context';
 import DropShadow from 'react-native-drop-shadow';
 import FitImage from 'react-native-fit-image';
-import ImageView from 'react-native-image-view';
+import ImageView from 'react-native-image-viewing';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import ModalSelector from 'react-native-modal-selector';
-
-// disable warning from react-native-image-view
-LogBox.ignoreAllLogs();
 
 function ChatHeaderLeft(props) {
   return (
@@ -104,7 +99,7 @@ class Chat extends React.Component {
       imagePreview: null,
       messageScrollView: null,
       imageSelector: false,
-      keyboardHeight: 0,
+      confirm: false,
     };
   }
 
@@ -302,24 +297,22 @@ class Chat extends React.Component {
                     paddingBottom: 2,
                   }}>
                   {v.additionImage ? (
-                    <React.Fragment>
-                      <TouchableWithoutFeedback
-                        onPress={() => this.setState({imageView: i})}>
-                        <FitImage
-                          source={{
-                            uri:
-                              this.props.serverUrl?.slice(0, -1) +
-                              v.additionImage,
-                          }}
-                          style={{
-                            marginBottom: 3,
-                            overflow: 'hidden',
-                            borderRadius: 3,
-                          }}
-                          resizeMode="contain"
-                        />
-                      </TouchableWithoutFeedback>
-                    </React.Fragment>
+                    <TouchableWithoutFeedback
+                      onPress={() => this.setState({imageView: i})}>
+                      <FitImage
+                        source={{
+                          uri:
+                            this.props.serverUrl?.slice(0, -1) +
+                            v.additionImage,
+                        }}
+                        style={{
+                          marginBottom: 3,
+                          overflow: 'hidden',
+                          borderRadius: 3,
+                        }}
+                        resizeMode="contain"
+                      />
+                    </TouchableWithoutFeedback>
                   ) : (
                     <View />
                   )}
@@ -426,74 +419,151 @@ class Chat extends React.Component {
                 animationType="fade"
                 images={[
                   {
-                    source: {
-                      uri: this.state.imageView
-                        ? this.props.serverUrl?.slice(0, -1) +
-                          messagesSort[this.state.imageView]?.additionImage
-                        : this.state.imagePreview?.uri,
-                    },
+                    uri: this.state.imageView
+                      ? this.props.serverUrl?.slice(0, -1) +
+                        messagesSort[this.state.imageView]?.additionImage
+                      : this.state.imagePreview?.uri,
                   },
                 ]}
-                isVisible={Boolean(
-                  this.state.imageView || this.state.imagePreview,
+                visible={Boolean(
+                  this.state.imageView ||
+                    (this.state.imagePreview && !this.state.confirm),
                 )}
                 imageIndex={0}
-                isSwipeCloseEnabled={Boolean(this.state.imageView)}
-                onClose={() =>
+                swipeToCloseEnabled={Boolean(this.state.imageView)}
+                onRequestClose={() =>
                   this.setState({imageView: '', imagePreview: null})
                 }
-                renderFooter={() =>
-                  this.state.imagePreview ? (
+                backgroundColor="#ffffff"
+                {...(this.state.imagePreview
+                  ? {
+                      HeaderComponent: () => (
+                        <SafeAreaView>
+                          <View
+                            style={{
+                              flex: 1,
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              marginHorizontal: 20,
+                            }}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                this.setState({
+                                  imageView: '',
+                                  imagePreview: null,
+                                })
+                              }>
+                              <Text
+                                style={{
+                                  color: '#ff0000',
+                                  fontSize: 18,
+                                }}>
+                                Cancel
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => this.setState({confirm: true})}>
+                              <Text
+                                style={{
+                                  color: '#6873F2',
+                                  fontSize: 18,
+                                }}>
+                                Confirm
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </SafeAreaView>
+                      ),
+                    }
+                  : {})}
+              />
+              <Modal visible={this.state.confirm} transparent>
+                <View
+                  style={{
+                    backgroundColor: '#00000066',
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <TouchableWithoutFeedback
+                    onPress={() =>
+                      this.setState({
+                        imageView: '',
+                        imagePreview: null,
+                        confirm: false,
+                      })
+                    }>
                     <View
                       style={{
-                        flexDirection: 'row',
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </TouchableWithoutFeedback>
+                  <KeyboardAvoidingView
+                    behavior="position"
+                    style={{width: '100%'}}
+                    keyboardVerticalOffset={-10}>
+                    <View
+                      style={{
+                        zIndex: 2,
+                        width: '90%',
+                        padding: 15,
+                        backgroundColor: '#ffffff',
+                        borderRadius: 10,
                         alignSelf: 'center',
-                        marginBottom: this.state.keyboardHeight
-                          ? this.state.keyboardHeight + 10
-                          : insets.bottom
-                          ? insets.bottom
-                          : 20,
                       }}>
-                      <TextInput
-                        style={{
-                          width: Dimensions.get('window').width * 0.75,
-                          height: 35,
-                          backgroundColor: '#eeeeee',
-                          borderRadius: 10,
-                          padding: 10,
-                        }}
-                        placeholder="Message With Image"
-                        placeholderTextColor="#aaaaaa"
-                        onChangeText={v => this.setState({imageContent: v})}
-                        value={this.state.imageContent}
+                      <FitImage
+                        source={{uri: this.state.imagePreview?.uri}}
+                        style={{borderRadius: 5, overflow: 'hidden'}}
+                        resizeMode="contain"
                       />
-                      <TouchableOpacity
-                        style={{marginLeft: 10}}
-                        onPress={() => {
-                          var imageContent = this.state.imageContent;
-                          var image = this.state.imagePreview;
-                          this.setState({
-                            imageContent: '',
-                            imagePreview: null,
-                          });
-                          this.props.sendMessage(
-                            this.props.route.params.group,
-                            imageContent,
-                            image,
-                          );
-                        }}>
-                        <FontAwesomeIcon
-                          icon={faPaperPlane}
-                          size={25}
-                          color="#ffffff"
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <TextInput
+                          style={{
+                            flex: 1,
+                            height: 30,
+                            backgroundColor: '#eeeeee',
+                            borderRadius: 10,
+                            paddingLeft: 10,
+                            marginTop: 10,
+                          }}
+                          placeholder="Message With Image"
+                          placeholderTextColor="#aaaaaa"
+                          onChangeText={v => this.setState({imageContent: v})}
+                          value={this.state.imageContent}
                         />
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{marginLeft: 10, transform: [{translateY: 3}]}}
+                          onPress={() => {
+                            var imageContent = this.state.imageContent;
+                            var image = this.state.imagePreview;
+                            this.setState({
+                              imageContent: '',
+                              imagePreview: null,
+                              confirm: false,
+                            });
+                            this.props.sendMessage(
+                              this.props.route.params.group,
+                              imageContent,
+                              image,
+                            );
+                          }}>
+                          <FontAwesomeIcon
+                            icon={faPaperPlane}
+                            size={20}
+                            color="#6873F2"
+                          />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  ) : undefined
-                }
-              />
+                  </KeyboardAvoidingView>
+                </View>
+              </Modal>
               <ScrollView
                 ref={ref => {
                   this.setState({messageScrollView: ref});
