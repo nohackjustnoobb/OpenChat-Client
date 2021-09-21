@@ -11,13 +11,16 @@ import {
   Image,
   Modal,
   Alert,
+  Dimensions,
+  TouchableWithoutFeedback,
+  Keyboard,
+  TextInput,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {Button, CheckBox} from 'react-native-elements';
 import {
   faChevronLeft,
   faUser,
-  faEdit,
   faUsers,
   faPlus,
 } from '@fortawesome/free-solid-svg-icons';
@@ -28,6 +31,8 @@ import {
   SafeAreaView,
   SafeAreaInsetsContext,
 } from 'react-native-safe-area-context';
+import ImageView from 'react-native-image-viewing';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 function GroupInfoHeaderLeft(props) {
   return (
@@ -66,12 +71,13 @@ class GroupInfo extends React.Component {
 
     this.state = {
       groupName: groupName,
-      avatar: props.serverUrl?.slice(0, -1) + avatar,
-      modal: false,
-      newGroupName: groupName,
+      avatar: avatar ? props.serverUrl?.slice(0, -1) + avatar : null,
       newAvatar: null,
       addUsers: false,
       selectedUser: [],
+      imageView: false,
+      edit: false,
+      confirm: false,
     };
   }
 
@@ -84,6 +90,7 @@ class GroupInfo extends React.Component {
         />
       ),
       title: this.group.isDM ? 'Contact Info' : 'Group Info',
+      headerRight: undefined,
     });
   }
 
@@ -95,7 +102,79 @@ class GroupInfo extends React.Component {
       : this.props.exitGroupByID(this.group.id);
   }
 
+  chooseAvatar() {
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      if (!response.didCancel)
+        this.setState({newAvatar: response.assets[0], imageView: false});
+    });
+  }
+
+  updateHeader() {
+    function Header(props) {
+      return (
+        <TouchableOpacity onPress={props.onPress}>
+          <Text
+            style={{
+              color: props.titleColor,
+              fontSize: 18,
+              marginHorizontal: 15,
+            }}>
+            {props.title}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    this.props.navigation.setOptions({
+      headerLeft: props => (
+        <Header
+          {...props}
+          title="Cancel"
+          titleColor="#ff0000"
+          onPress={() => {
+            Keyboard.dismiss();
+            this.componentDidMount();
+            this.setState({
+              newAvatar: null,
+              groupName: this.group.groupName,
+              confirm: false,
+              edit: false,
+              imageView: false,
+            });
+          }}
+        />
+      ),
+      headerRight: props => (
+        <Header
+          {...props}
+          title="Done"
+          titleColor="#6873F2"
+          onPress={async () => {
+            var groupInfo = await this.props.patchGroupInfo(
+              this.group.id,
+              this.state.groupName,
+              this.state.newAvatar,
+            );
+            if (groupInfo) {
+              this.setState({
+                newAvatar: null,
+                groupName: groupInfo?.groupName,
+                avatar: this.props.serverUrl?.slice(0, -1) + groupInfo?.avatar,
+                edit: false,
+                imageView: false,
+                confirm: false,
+              });
+            }
+            Keyboard.dismiss();
+            this.componentDidMount();
+          }}
+        />
+      ),
+    });
+  }
+
   render() {
+    if (this.state.edit) this.updateHeader();
     this.group = this.props.group[this.props.route.params.group];
 
     var membersList = this.group.members.map((v, i) => {
@@ -239,366 +318,394 @@ class GroupInfo extends React.Component {
     }
 
     return (
-      <ScrollView style={{backgroundColor: '#F9F9F9'}}>
-        <SafeAreaView edges={['right', 'bottom', 'left']}>
-          <Modal
-            visible={this.state.modal || this.state.addUsers}
-            presentationStyle="formSheet"
-            animationType="slide">
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#ffffff',
-              }}>
-              <Button
-                title="Cancel"
-                type="clear"
-                containerStyle={{marginLeft: 15, marginTop: 10}}
-                titleStyle={{color: '#ff0000'}}
-                onPress={() =>
-                  this.setState({
-                    modal: false,
-                    newGroupName: this.state.groupName,
-                    newAvatar: null,
-                    addUsers: false,
-                    selectedUser: [],
-                  })
-                }
-              />
-              <View style={{alignItems: 'center'}}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: '600',
-                  }}>
-                  {this.state.modal ? 'Edit Group Info' : 'Add Participants'}
-                </Text>
-                <Text
-                  style={{
-                    color: '#888888',
-                    fontWeight: '400',
-                    fontSize: 10,
-                    display: this.state.modal ? 'flex' : 'none',
-                  }}>
-                  Click To Edit
-                </Text>
-              </View>
-              <Button
-                title={'Done'}
-                type="clear"
-                containerStyle={{marginRight: 15, marginTop: 10}}
-                titleStyle={{color: '#6873F2'}}
-                onPress={async () => {
-                  if (this.state.modal) {
-                    var groupInfo = await this.props.patchGroupInfo(
-                      this.group.id,
-                      this.state.newGroupName,
-                      this.state.newAvatar,
-                    );
-                    if (groupInfo) {
-                      this.setState({
-                        modal: false,
-                        newGroupName: groupInfo?.groupName,
-                        newAvatar: null,
-                        groupName: groupInfo?.groupName,
-                        avatar:
-                          this.props.serverUrl?.slice(0, -1) +
-                          groupInfo?.avatar,
-                      });
-                    }
-                  } else {
-                    this.props.addUsers(this.group.id, this.state.selectedUser);
-                    this.setState({addUsers: false, selectedUser: []});
-                  }
-                }}
-              />
-            </View>
-            {this.state.modal ? (
-              <>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: 5,
-                    backgroundColor: '#ffffff',
-                  }}>
-                  <TouchableOpacity
+      <KeyboardAwareScrollView
+        style={{backgroundColor: '#F9F9F9'}}
+        extraScrollHeight={10}>
+        <ImageView
+          images={[
+            {
+              uri: this.state.newAvatar
+                ? this.state.newAvatar.uri
+                : this.state.avatar,
+            },
+          ]}
+          imageIndex={0}
+          backgroundColor="#ffffff"
+          visible={
+            (this.state.imageView || this.state.newAvatar) &&
+            !this.state.confirm
+          }
+          onRequestClose={() =>
+            this.setState({imageView: false, newAvatar: null})
+          }
+          {...((!this.group.isDM &&
+            this.group.groupAdmins.find(e => e === this.props.userInfo.id)) ||
+          this.group.owner === this.props.userInfo.id
+            ? {
+                HeaderComponent: () => (
+                  <SafeAreaView
                     style={{
-                      backgroundColor: '#CCCCCC',
-                      height: 60,
-                      width: 60,
-                      borderRadius: 30,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      alignSelf: 'center',
-                      overflow: 'hidden',
-                    }}
-                    onPress={() =>
-                      launchImageLibrary({mediaType: 'photo'}, response => {
-                        if (!response.didCancel)
-                          this.setState({newAvatar: response.assets[0]});
-                      })
-                    }>
-                    {this.group.avatar || this.state.newAvatar ? (
-                      <Image
-                        source={{
-                          uri: this.state.newAvatar
-                            ? this.state.newAvatar.uri
-                            : this.state.avatar,
-                        }}
-                        style={{height: 60, width: 60}}
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faUsers}
-                        color="#ffffff"
-                        size={30}
-                      />
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{marginLeft: 15}}
-                    onPress={() =>
-                      Alert.prompt('Group Name', undefined, v => {
-                        if (v) this.setState({newGroupName: v});
-                      })
-                    }>
-                    <Text style={{fontSize: 18}}>
-                      {this.state.newGroupName}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : (
-              <>
-                <ScrollView
-                  style={{
-                    flex: 1,
-                    padding: 10,
-                  }}>
-                  {this.props.friends.filter(
-                    v => !this.group.members.find(e => e === v),
-                  ).length ? (
-                    this.props.friends
-                      .filter(v => !this.group.members.find(e => e === v))
-                      .map(v => (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginBottom: 5,
-                          }}
-                          key={v.id}>
-                          <View
-                            style={{
-                              backgroundColor: '#CCCCCC',
-                              height: 35,
-                              width: 35,
-                              borderRadius: 25,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              marginRight: 10,
-                              overflow: 'hidden',
-                            }}>
-                            {this.props.user[v]?.avatar ? (
-                              <Image
-                                source={{
-                                  uri:
-                                    this.props.serverUrl?.slice(0, -1) +
-                                    this.props.user[v].avatar,
-                                }}
-                                style={{height: 35, width: 35}}
-                              />
-                            ) : (
-                              <FontAwesomeIcon
-                                icon={faUser}
-                                color="#ffffff"
-                                size={18}
-                              />
-                            )}
-                          </View>
-                          <View
-                            style={{
-                              justifyContent: 'center',
-                              alignContent: 'center',
-                            }}>
-                            <Text>{this.props.user[v]?.username}</Text>
-                            <Text style={{color: '#888888', fontSize: 11}}>
-                              {this.props.user[v]?.email}
-                            </Text>
-                          </View>
-                          <CheckBox
-                            checkedIcon="dot-circle-o"
-                            uncheckedIcon="circle-o"
-                            checkedColor="#6873F2"
-                            containerStyle={{
-                              position: 'absolute',
-                              right: -5,
-                            }}
-                            checked={Boolean(
-                              this.state.selectedUser.find(e => e === v),
-                            )}
-                            onPress={() => {
-                              var selectedUser = this.state.selectedUser;
-                              if (this.state.selectedUser.find(e => e === v)) {
-                                selectedUser.pop(v);
-                              } else {
-                                selectedUser.push(v);
-                              }
-                              this.setState({selectedUser: selectedUser});
-                            }}
-                          />
-                        </View>
-                      ))
-                  ) : (
-                    <Text
-                      style={{
-                        alignSelf: 'center',
-                        color: '#888888',
-                        fontSize: 14,
+                      flexDirection: this.state.newAvatar
+                        ? 'row-reverse'
+                        : 'row',
+                      justifyContent: 'space-between',
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (this.state.newAvatar) {
+                          this.setState({
+                            confirm: true,
+                            edit: true,
+                            imageView: false,
+                          });
+                        } else {
+                          this.chooseAvatar();
+                        }
                       }}>
-                      No Result
-                    </Text>
-                  )}
-                </ScrollView>
-              </>
-            )}
-          </Modal>
-          <FitImage
-            source={{
-              uri: this.state.avatar,
-            }}
-            resizeMode="contain"
-          />
+                      <Text
+                        style={{
+                          color: '#6873F2',
+                          fontSize: 18,
+                          marginHorizontal: 20,
+                          marginVertical: 5,
+                        }}>
+                        {this.state.newAvatar ? 'Confirm' : 'Edit'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        this.setState({imageView: false, newAvatar: null})
+                      }>
+                      <Text
+                        style={{
+                          color: '#ff0000',
+                          fontSize: 18,
+                          marginHorizontal: 20,
+                          marginVertical: 5,
+                        }}>
+                        {this.state.newAvatar ? 'Cancel' : 'Close'}
+                      </Text>
+                    </TouchableOpacity>
+                  </SafeAreaView>
+                ),
+              }
+            : {})}
+        />
+        <Modal
+          visible={this.state.addUsers}
+          presentationStyle="formSheet"
+          animationType="slide">
           <View
             style={{
-              marginVertical: 20,
-              marginTop: 0,
-              borderBottomWidth: 1,
-              borderTopWidth: 1,
-              borderColor: '#dddddd',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#ffffff',
             }}>
+            <Button
+              title="Cancel"
+              type="clear"
+              containerStyle={{marginLeft: 15, marginTop: 10}}
+              titleStyle={{color: '#ff0000'}}
+              onPress={() =>
+                this.setState({
+                  modal: false,
+                  newGroupName: this.state.groupName,
+                  newAvatar: null,
+                  addUsers: false,
+                  selectedUser: [],
+                })
+              }
+            />
+            <View style={{alignItems: 'center'}}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                }}>
+                {'Add Participants'}
+              </Text>
+            </View>
+            <Button
+              title={'Done'}
+              type="clear"
+              containerStyle={{marginRight: 15, marginTop: 10}}
+              titleStyle={{color: '#6873F2'}}
+              onPress={() => {
+                this.props.addUsers(this.group.id, this.state.selectedUser);
+                this.setState({addUsers: false, selectedUser: []});
+              }}
+            />
+          </View>
+
+          <ScrollView
+            style={{
+              flex: 1,
+              padding: 10,
+            }}>
+            {this.props.friends.filter(
+              v => !this.group.members.find(e => e === v),
+            ).length ? (
+              this.props.friends
+                .filter(v => !this.group.members.find(e => e === v))
+                .map(v => (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 5,
+                    }}
+                    key={v.id}>
+                    <View
+                      style={{
+                        backgroundColor: '#CCCCCC',
+                        height: 35,
+                        width: 35,
+                        borderRadius: 25,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: 10,
+                        overflow: 'hidden',
+                      }}>
+                      {this.props.user[v]?.avatar ? (
+                        <Image
+                          source={{
+                            uri:
+                              this.props.serverUrl?.slice(0, -1) +
+                              this.props.user[v].avatar,
+                          }}
+                          style={{height: 35, width: 35}}
+                        />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faUser}
+                          color="#ffffff"
+                          size={18}
+                        />
+                      )}
+                    </View>
+                    <View
+                      style={{
+                        justifyContent: 'center',
+                        alignContent: 'center',
+                      }}>
+                      <Text>{this.props.user[v]?.username}</Text>
+                      <Text style={{color: '#888888', fontSize: 11}}>
+                        {this.props.user[v]?.email}
+                      </Text>
+                    </View>
+                    <CheckBox
+                      checkedIcon="dot-circle-o"
+                      uncheckedIcon="circle-o"
+                      checkedColor="#6873F2"
+                      containerStyle={{
+                        position: 'absolute',
+                        right: -5,
+                      }}
+                      checked={Boolean(
+                        this.state.selectedUser.find(e => e === v),
+                      )}
+                      onPress={() => {
+                        var selectedUser = this.state.selectedUser;
+                        if (this.state.selectedUser.find(e => e === v)) {
+                          selectedUser.pop(v);
+                        } else {
+                          selectedUser.push(v);
+                        }
+                        this.setState({selectedUser: selectedUser});
+                      }}
+                    />
+                  </View>
+                ))
+            ) : (
+              <Text
+                style={{
+                  alignSelf: 'center',
+                  color: '#888888',
+                  fontSize: 14,
+                }}>
+                No Result
+              </Text>
+            )}
+          </ScrollView>
+        </Modal>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (this.state.avatar) {
+              this.setState({imageView: true});
+            } else if (
+              this.group.groupAdmins.find(e => e === this.props.userInfo.id) ||
+              this.group.owner === this.props.userInfo.id
+            ) {
+              this.chooseAvatar();
+            }
+          }}>
+          {this.state.avatar || this.state.newAvatar ? (
+            this.state.confirm ? (
+              <Image
+                source={{uri: this.state.newAvatar?.uri}}
+                style={{
+                  width: '100%',
+                  height:
+                    this.state.newAvatar.height *
+                    (Dimensions.get('screen').width /
+                      this.state.newAvatar.width),
+                }}
+              />
+            ) : (
+              <FitImage
+                source={{
+                  uri: this.state.avatar,
+                }}
+                resizeMode="contain"
+              />
+            )
+          ) : (
             <View
               style={{
-                backgroundColor: '#ffffff',
-                padding: 10,
-                flexDirection: this.group.isDM ? 'column' : 'row',
+                width: Dimensions.get('screen').width,
+                height: Dimensions.get('screen').width,
+                backgroundColor: '#CCCCCC',
+                justifyContent: 'center',
+                alignItems: 'center',
               }}>
-              <Text>{this.state.groupName}</Text>
-              {this.group.isDM && this.props.user[this.userID].email ? (
-                <Text style={{color: '#888888', fontSize: 11}}>
-                  {this.props.user[this.userID].email}
-                </Text>
-              ) : this.group.isDM ||
-                !(
-                  this.group.groupAdmins.find(
-                    e => e === this.props.userInfo.id,
-                  ) || this.group.owner === this.props.userInfo.id
-                ) ? (
-                <></>
-              ) : (
-                <TouchableOpacity
-                  style={{
-                    position: 'absolute',
-                    right: 15,
-                    flex: 1,
-                    alignSelf: 'center',
-                  }}
-                  onPress={() => this.setState({modal: true})}>
-                  <FontAwesomeIcon icon={faEdit} size={20} color="#6873F2" />
-                </TouchableOpacity>
-              )}
+              <FontAwesomeIcon
+                icon={faUsers}
+                size={Dimensions.get('screen').width / 2}
+                color="#ffffff"
+              />
             </View>
-            {this.group.isDM && this.props.user[this.userID].bio ? (
-              <>
-                <View
-                  style={{
-                    backgroundColor: '#eeeeee',
-                    height: 1,
-                    width: '100%',
-                    alignSelf: 'center',
-                  }}
-                />
-                <View
-                  style={{
-                    backgroundColor: '#ffffff',
-                    padding: 10,
-                  }}>
-                  <Text>{this.props.user[this.userID].bio}</Text>
-                </View>
-              </>
+          )}
+        </TouchableWithoutFeedback>
+        <View
+          style={{
+            marginVertical: 20,
+            marginTop: 0,
+            borderBottomWidth: 1,
+            borderTopWidth: 1,
+            borderColor: '#dddddd',
+          }}>
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              padding: 10,
+              flexDirection: this.group.isDM ? 'column' : 'row',
+            }}>
+            <TextInput
+              value={this.state.groupName}
+              onChangeText={v =>
+                this.setState({
+                  edit: true,
+                  groupName: v.length <= 50 ? v : this.state.groupName,
+                })
+              }
+              style={{flex: 1}}
+              editable={
+                !this.group.isDM &&
+                (this.group.groupAdmins.find(
+                  e => e === this.props.userInfo.id,
+                ) ||
+                  this.group.owner === this.props.userInfo.id)
+              }
+            />
+            {this.group.isDM && this.props.user[this.userID].email ? (
+              <Text style={{color: '#888888', fontSize: 11}}>
+                {this.props.user[this.userID].email}
+              </Text>
+            ) : this.state.groupName !== this.group.groupName ? (
+              <Text style={{color: '#888888', fontSize: 16}}>
+                {50 - this.state.groupName.length}
+              </Text>
             ) : (
               <></>
             )}
           </View>
-          {this.group.isDM ? (
-            <></>
-          ) : (
-            <View>
-              <Text style={{marginLeft: 10, marginBottom: 3}}>
-                {this.group.members.length} Participants
-              </Text>
+          {this.group.isDM && this.props.user[this.userID].bio ? (
+            <>
+              <View
+                style={{
+                  backgroundColor: '#eeeeee',
+                  height: 1,
+                  width: '100%',
+                  alignSelf: 'center',
+                }}
+              />
               <View
                 style={{
                   backgroundColor: '#ffffff',
-                  borderBottomWidth: 1,
-                  borderTopWidth: 1,
-                  borderColor: '#dddddd',
+                  padding: 10,
                 }}>
-                {membersList}
+                <Text>{this.props.user[this.userID].bio}</Text>
               </View>
-            </View>
+            </>
+          ) : (
+            <></>
           )}
-          <Button
-            title={
-              this.group.isDM
-                ? `${
-                    this.props.blocked.find(v => v === this.userID)
-                      ? 'Unblock'
-                      : 'Block'
-                  } ${this.props.user[this.userID].username}`
-                : this.group.owner === this.props.userInfo.id
-                ? 'Delete Group'
-                : 'Exit Group'
-            }
-            containerStyle={{
-              borderBottomWidth: 1,
-              borderTopWidth: 1,
-              borderColor: '#dddddd',
-              marginTop: 20,
-            }}
-            buttonStyle={{backgroundColor: '#ffffff'}}
-            titleStyle={{color: '#ff0000'}}
-            onPress={() =>
-              Alert.alert(
-                `${
-                  this.group.isDM
-                    ? `${
-                        this.props.blocked.find(v => v === this.userID)
-                          ? 'Unblock'
-                          : 'Block'
-                      } ${this.props.user[this.userID].username}`
-                    : this.group.owner === this.props.userInfo.id
-                    ? 'Delete Group'
-                    : 'Exit Group'
-                } ?`,
-                undefined,
-                [
-                  {text: 'Cancel', style: 'cancel'},
-                  {
-                    text: 'Yes',
-                    style: 'destructive',
-                    onPress: () => this.ExitGroup(),
-                  },
-                ],
-              )
-            }
-          />
-        </SafeAreaView>
-      </ScrollView>
+        </View>
+        {this.group.isDM ? (
+          <></>
+        ) : (
+          <View>
+            <Text style={{marginLeft: 10, marginBottom: 3}}>
+              {this.group.members.length} Participants
+            </Text>
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderBottomWidth: 1,
+                borderTopWidth: 1,
+                borderColor: '#dddddd',
+              }}>
+              {membersList}
+            </View>
+          </View>
+        )}
+        <Button
+          title={
+            this.group.isDM
+              ? `${
+                  this.props.blocked.find(v => v === this.userID)
+                    ? 'Unblock'
+                    : 'Block'
+                } ${this.props.user[this.userID].username}`
+              : this.group.owner === this.props.userInfo.id
+              ? 'Delete Group'
+              : 'Exit Group'
+          }
+          containerStyle={{
+            borderBottomWidth: 1,
+            borderTopWidth: 1,
+            borderColor: '#dddddd',
+            marginTop: 20,
+          }}
+          buttonStyle={{backgroundColor: '#ffffff'}}
+          titleStyle={{color: '#ff0000'}}
+          onPress={() =>
+            Alert.alert(
+              `${
+                this.group.isDM
+                  ? `${
+                      this.props.blocked.find(v => v === this.userID)
+                        ? 'Unblock'
+                        : 'Block'
+                    } ${this.props.user[this.userID].username}`
+                  : this.group.owner === this.props.userInfo.id
+                  ? 'Delete Group'
+                  : 'Exit Group'
+              } ?`,
+              undefined,
+              [
+                {text: 'Cancel', style: 'cancel'},
+                {
+                  text: 'Yes',
+                  style: 'destructive',
+                  onPress: () => this.ExitGroup(),
+                },
+              ],
+            )
+          }
+        />
+      </KeyboardAwareScrollView>
     );
   }
 }
