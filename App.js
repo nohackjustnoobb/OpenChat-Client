@@ -385,13 +385,18 @@ class App extends React.Component {
 
       var jsonResult = await response.json();
       var message = this.state.message;
-      message[id] = message[id]
-        ? [...message[id], ...jsonResult]
-        : [...jsonResult];
+      if (message[id]) {
+        var messageID = message[id].map(v => v.id);
+        jsonResult.filter(v => !messageID.find(_ => _ === v.id));
+        message[id] = [...message[id], ...jsonResult];
+      } else {
+        message[id] = [...jsonResult];
+      }
 
       var group = this.state.group;
       group[id].unReadMessage = null;
       this.setState({message: message, group: group});
+      return;
     } catch (e) {
       Alert.alert('Failed To Get Messages');
     }

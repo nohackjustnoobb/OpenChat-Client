@@ -78,10 +78,10 @@ class Chat extends React.Component {
       content: '',
       imageContent: '',
       imagePreview: null,
-      messageScrollView: null,
       imageSelector: false,
       confirm: false,
     };
+    this.messageCounter = 0;
   }
 
   componentDidMount() {
@@ -116,7 +116,7 @@ class Chat extends React.Component {
       !this.props.message[group.id] ||
       this.props.message[group.id].length < 50
     ) {
-      this.props.getGroupMessageByID(group.id);
+      this.getGroupMessageByID(group.id);
     }
 
     this.keyboardDidShowSubscription = Keyboard.addListener(
@@ -132,6 +132,11 @@ class Chat extends React.Component {
   componentWillUnmount() {
     this.keyboardDidShowSubscription.remove();
     this.keyboardDidHideSubscription.remove();
+  }
+
+  async getGroupMessageByID(id) {
+    this.messageCounter++;
+    return await this.props.getGroupMessageByID(id);
   }
 
   getImage(useCamera) {
@@ -533,15 +538,41 @@ class Chat extends React.Component {
               </Modal>
               <ScrollView
                 ref={ref => {
-                  this.setState({messageScrollView: ref});
+                  this.messageScrollView = ref;
                 }}
                 style={{
                   backgroundColor: '#F9F9F9',
                 }}
+                scrollEventThrottle={1600}
+                onScroll={async e => {
+                  if (e.nativeEvent.contentOffset.y <= 0) {
+                    if (!this.getMessage) {
+                      this.getMessage = true;
+                      await this.getGroupMessageByID(
+                        this.props.route.params.group,
+                      );
+                    }
+                    setTimeout(() => (this.getMessage = false), 2000);
+                  }
+                }}
                 contentContainerStyle={{paddingVertical: 5}}
-                onContentSizeChange={() =>
-                  this.state.messageScrollView.scrollToEnd({animated: false})
-                }>
+                onContentSizeChange={(w, h) => {
+                  if (this.messageCounter <= 1) {
+                    this.messageScrollView.scrollToEnd({animated: false});
+                  }
+                  if (
+                    !this.scrollHeight ||
+                    this.scrollHeight[0] === this.messageCounter
+                  ) {
+                    this.scrollHeight = [this.messageCounter, h];
+                  } else {
+                    this.messageScrollView.scrollTo({
+                      y: h - this.scrollHeight[1],
+                      animated: false,
+                    });
+                    this.scrollHeight = [this.messageCounter, h];
+                  }
+                }}>
                 {messagesView}
               </ScrollView>
               <View
