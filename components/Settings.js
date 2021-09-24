@@ -7,7 +7,6 @@ import {
   ScrollView,
   Text,
   View,
-  Image,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -16,12 +15,12 @@ import {
 } from 'react-native';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {Button} from 'react-native-elements';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faUser} from '@fortawesome/free-solid-svg-icons';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {BackHeaderLeft} from '../App';
 import ImageView from 'react-native-image-viewing';
 import {SafeAreaView} from 'react-native-safe-area-context';
+
+import {Avatar} from '../App';
 
 // Settings Page
 class Settings extends React.Component {
@@ -249,34 +248,20 @@ class Settings extends React.Component {
             <TouchableOpacity
               onPress={() => this.setState({avatarView: true})}
               style={{
-                width: 70,
-                height: 70,
-                borderRadius: 35,
-                overflow: 'hidden',
-                backgroundColor: '#CCCCCC',
-                justifyContent: 'center',
                 margin: 10,
                 marginRight: 10,
                 marginLeft: 20,
               }}>
-              {this.state.avatar ? (
-                <Image
-                  source={{
-                    uri:
-                      this.state.avatar === this.props.userInfo?.avatar
-                        ? this.props.serverUrl?.slice(0, -1) + this.state.avatar
-                        : this.state.avatar.uri,
-                  }}
-                  style={{width: 70, height: 70}}
-                />
-              ) : (
-                <FontAwesomeIcon
-                  icon={faUser}
-                  color="#ffffff"
-                  size={35}
-                  style={{alignSelf: 'center'}}
-                />
-              )}
+              <Avatar
+                size={70}
+                uri={
+                  this.state.avatar
+                    ? this.state.avatar === this.props.userInfo?.avatar
+                      ? this.props.serverUrl?.slice(0, -1) + this.state.avatar
+                      : this.state.avatar.uri
+                    : undefined
+                }
+              />
             </TouchableOpacity>
             <TextInput
               numberOfLines={1}

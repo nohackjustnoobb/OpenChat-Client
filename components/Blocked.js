@@ -3,10 +3,10 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, View, Text, Image} from 'react-native';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faUser} from '@fortawesome/free-solid-svg-icons';
+import {ScrollView, View, Text} from 'react-native';
 import {Button} from 'react-native-elements';
+
+import {Avatar} from '../App';
 
 class Blocked extends React.Component {
   constructor(props) {
@@ -26,30 +26,15 @@ class Blocked extends React.Component {
                 marginBottom: 5,
               }}
               key={v.id}>
-              <View
-                style={{
-                  backgroundColor: '#CCCCCC',
-                  height: 35,
-                  width: 35,
-                  borderRadius: 25,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginRight: 10,
-                  overflow: 'hidden',
-                }}>
-                {this.props.user[v].avatar ? (
-                  <Image
-                    source={{
-                      uri:
-                        this.props.serverUrl?.slice(0, -1) +
-                        this.props.user[v].avatar,
-                    }}
-                    style={{height: 35, width: 35}}
-                  />
-                ) : (
-                  <FontAwesomeIcon icon={faUser} color="#ffffff" size={18} />
-                )}
-              </View>
+              <Avatar
+                size={35}
+                uri={
+                  this.props.user[v].avatar
+                    ? this.props.serverUrl?.slice(0, -1) +
+                      this.props.user[v].avatar
+                    : undefined
+                }
+              />
               <View style={{justifyContent: 'center', alignContent: 'center'}}>
                 <Text>{this.props.user[v].username}</Text>
               </View>

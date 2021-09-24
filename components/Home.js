@@ -3,14 +3,11 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, Text, View, TouchableOpacity, Image} from 'react-native';
+import {ScrollView, Text, View, TouchableOpacity} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {
-  faUser,
-  faUsers,
-  faImage,
-  faFile,
-} from '@fortawesome/free-solid-svg-icons';
+import {faImage, faFile} from '@fortawesome/free-solid-svg-icons';
+
+import {Avatar} from '../App';
 
 // Main Page
 class Home extends React.Component {
@@ -51,36 +48,6 @@ class Home extends React.Component {
           avatar = this.props.user[userID].avatar;
         }
       }
-
-      // map avatar view
-      var avatarView = (
-        <View
-          style={{
-            backgroundColor: '#CCCCCC',
-            height: 50,
-            width: 50,
-            borderRadius: 25,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: 10,
-            overflow: 'hidden',
-          }}>
-          {avatar ? (
-            <Image
-              source={{
-                uri: this.props.serverUrl?.slice(0, -1) + avatar,
-              }}
-              style={{height: 50, width: 50}}
-            />
-          ) : (
-            <FontAwesomeIcon
-              icon={group.isDM ? faUser : faUsers}
-              color="#ffffff"
-              size={25}
-            />
-          )}
-        </View>
-      );
 
       // handle last message owner
       var messageOwnerView = <View />;
@@ -156,7 +123,13 @@ class Home extends React.Component {
               group: group.id,
             })
           }>
-          {avatarView}
+          <Avatar
+            size={50}
+            uri={
+              avatar ? this.props.serverUrl?.slice(0, -1) + avatar : undefined
+            }
+            isGroup={!group.isDM}
+          />
           <View style={{height: 40, justifyContent: 'center', flex: 1}}>
             <Text
               style={{

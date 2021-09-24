@@ -20,7 +20,6 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {Button, CheckBox} from 'react-native-elements';
 import {
   faChevronLeft,
-  faUser,
   faUsers,
   faPlus,
 } from '@fortawesome/free-solid-svg-icons';
@@ -33,6 +32,8 @@ import {
 } from 'react-native-safe-area-context';
 import ImageView from 'react-native-image-viewing';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
+import {Avatar} from '../App';
 
 function GroupInfoHeaderLeft(props) {
   return (
@@ -233,30 +234,15 @@ class GroupInfo extends React.Component {
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}>
-                <View
-                  style={{
-                    backgroundColor: '#CCCCCC',
-                    height: 35,
-                    width: 35,
-                    borderRadius: 17.5,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginRight: 10,
-                    overflow: 'hidden',
-                  }}>
-                  {this.props.user[v].avatar ? (
-                    <Image
-                      source={{
-                        uri:
-                          this.props.serverUrl?.slice(0, -1) +
-                          this.props.user[v].avatar,
-                      }}
-                      style={{height: 35, width: 35}}
-                    />
-                  ) : (
-                    <FontAwesomeIcon icon={faUser} color="#ffffff" size={12} />
-                  )}
-                </View>
+                <Avatar
+                  size={35}
+                  uri={
+                    this.props.user[v].avatar
+                      ? this.props.serverUrl?.slice(0, -1) +
+                        this.props.user[v].avatar
+                      : undefined
+                  }
+                />
                 <Text>{this.props.user[v].username}</Text>
                 <Text
                   style={{position: 'absolute', right: 10, color: '#888888'}}>
@@ -456,34 +442,15 @@ class GroupInfo extends React.Component {
                       marginBottom: 5,
                     }}
                     key={v.id}>
-                    <View
-                      style={{
-                        backgroundColor: '#CCCCCC',
-                        height: 35,
-                        width: 35,
-                        borderRadius: 25,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: 10,
-                        overflow: 'hidden',
-                      }}>
-                      {this.props.user[v]?.avatar ? (
-                        <Image
-                          source={{
-                            uri:
-                              this.props.serverUrl?.slice(0, -1) +
-                              this.props.user[v].avatar,
-                          }}
-                          style={{height: 35, width: 35}}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={faUser}
-                          color="#ffffff"
-                          size={18}
-                        />
-                      )}
-                    </View>
+                    <Avatar
+                      size={35}
+                      uri={
+                        this.props.user[v]?.avatar
+                          ? this.props.serverUrl?.slice(0, -1) +
+                            this.props.user[v].avatar
+                          : undefined
+                      }
+                    />
                     <View
                       style={{
                         justifyContent: 'center',

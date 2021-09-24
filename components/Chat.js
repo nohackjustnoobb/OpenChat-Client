@@ -8,7 +8,6 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Image,
   ScrollView,
   TextInput,
   Dimensions,
@@ -19,8 +18,6 @@ import {
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faChevronLeft,
-  faUser,
-  faUsers,
   faPlus,
   faPaperPlane,
   faCamera,
@@ -35,6 +32,8 @@ import FitImage from 'react-native-fit-image';
 import ImageView from 'react-native-image-viewing';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import ModalSelector from 'react-native-modal-selector';
+
+import {Avatar} from '../App';
 
 function ChatHeaderLeft(props) {
   return (
@@ -51,33 +50,15 @@ function ChatHeaderLeft(props) {
       <TouchableOpacity
         style={{flexDirection: 'row', alignItems: 'center'}}
         onPress={() => props.groupInfo()}>
-        <View
-          style={{
-            backgroundColor: '#CCCCCC',
-            height: 35,
-            width: 35,
-            borderRadius: 17.5,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: 10,
-            overflow: 'hidden',
-            marginLeft: 15,
-          }}>
-          {props.avatar ? (
-            <Image
-              source={{
-                uri: props.serverUrl?.slice(0, -1) + props.avatar,
-              }}
-              style={{height: 35, width: 35}}
-            />
-          ) : (
-            <FontAwesomeIcon
-              icon={props.isDM ? faUser : faUsers}
-              color="#ffffff"
-              size={18}
-            />
-          )}
-        </View>
+        <Avatar
+          size={35}
+          uri={
+            props.avatar
+              ? props.serverUrl?.slice(0, -1) + props.avatar
+              : undefined
+          }
+          isGroup={!props.isDM}
+        />
         <View>
           <Text style={{fontWeight: '600', fontSize: 13}}>
             {props.groupName}
@@ -237,30 +218,16 @@ class Chat extends React.Component {
               marginBottom: 5,
             }}>
             <View
-              style={{
-                backgroundColor: '#CCCCCC',
-                height: 35,
-                width: 35,
-                borderRadius: 17.5,
-                justifyContent: 'center',
-                alignItems: 'center',
-                margin: 10,
-                marginTop: 2,
-                overflow: 'hidden',
-                display: newDate ? 'flex' : userDisplay,
-              }}>
-              {this.props.user[v.owner]?.avatar ? (
-                <Image
-                  source={{
-                    uri:
-                      this.props.serverUrl?.slice(0, -1) +
-                      this.props.user[v.owner].avatar,
-                  }}
-                  style={{height: 35, width: 35}}
-                />
-              ) : (
-                <FontAwesomeIcon icon={faUser} color="#ffffff" size={15} />
-              )}
+              style={{marginLeft: 10, display: newDate ? 'flex' : userDisplay}}>
+              <Avatar
+                size={35}
+                uri={
+                  this.props.user[v.owner]?.avatar
+                    ? this.props.serverUrl?.slice(0, -1) +
+                      this.props.user[v.owner].avatar
+                    : undefined
+                }
+              />
             </View>
             <View>
               <Text

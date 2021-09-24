@@ -77,6 +77,7 @@ class Login extends React.Component {
         );
       } else {
         Alert.alert('Username or Password is incorrect');
+        this.setState({password: ''});
       }
     } catch (e) {
       Alert.alert('Unknown Error');

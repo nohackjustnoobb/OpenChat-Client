@@ -3,11 +3,11 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {ScrollView, View, Text, Image} from 'react-native';
+import {ScrollView, View, Text} from 'react-native';
 import {SearchBar} from 'react-native-elements';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faUser} from '@fortawesome/free-solid-svg-icons';
 import {Button} from 'react-native-elements';
+
+import {Avatar} from '../App';
 
 class Search extends React.Component {
   constructor(props) {
@@ -33,28 +33,14 @@ class Search extends React.Component {
             marginBottom: 10,
           }}
           key={v.id}>
-          <View
-            style={{
-              backgroundColor: '#CCCCCC',
-              height: 35,
-              width: 35,
-              borderRadius: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: 10,
-              overflow: 'hidden',
-            }}>
-            {v.avatar ? (
-              <Image
-                source={{
-                  uri: this.props.serverUrl?.slice(0, -1) + v.avatar,
-                }}
-                style={{height: 35, width: 35}}
-              />
-            ) : (
-              <FontAwesomeIcon icon={faUser} color="#ffffff" size={12} />
-            )}
-          </View>
+          <Avatar
+            size={35}
+            uri={
+              v.avatar
+                ? this.props.serverUrl?.slice(0, -1) + v.avatar
+                : undefined
+            }
+          />
           <View style={{justifyContent: 'center'}}>
             <Text>{v.username}</Text>
             <Text style={{color: '#888888', fontSize: 11}}>

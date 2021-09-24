@@ -3,23 +3,14 @@
 /* eslint-disable prettier/prettier */
 
 import React from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import {ScrollView, View, Text, TouchableOpacity, Alert} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {
-  faUser,
-  faTimesCircle,
-  faCheckCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import {faTimesCircle, faCheckCircle} from '@fortawesome/free-solid-svg-icons';
 import {Button} from 'react-native-elements';
 import ModalSelector from 'react-native-modal-selector';
 import {SafeAreaInsetsContext} from 'react-native-safe-area-context';
+
+import {Avatar} from '../App';
 
 class Friends extends React.Component {
   constructor(props) {
@@ -37,30 +28,15 @@ class Friends extends React.Component {
         <View
           style={{flexDirection: 'row', alignItems: 'center', marginBottom: 5}}
           key={`_${v.id}`}>
-          <View
-            style={{
-              backgroundColor: '#CCCCCC',
-              height: 35,
-              width: 35,
-              borderRadius: 25,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: 10,
-              overflow: 'hidden',
-            }}>
-            {this.props.user[user]?.avatar ? (
-              <Image
-                source={{
-                  uri:
-                    this.props.serverUrl?.slice(0, -1) +
-                    this.props.user[user].avatar,
-                }}
-                style={{height: 35, width: 35}}
-              />
-            ) : (
-              <FontAwesomeIcon icon={faUser} color="#ffffff" size={12} />
-            )}
-          </View>
+          <Avatar
+            size={35}
+            uri={
+              this.props.user[user]?.avatar
+                ? this.props.serverUrl?.slice(0, -1) +
+                  this.props.user[user].avatar
+                : undefined
+            }
+          />
           <View style={{justifyContent: 'center'}}>
             <Text>{this.props.user[user]?.username}</Text>
             <Text style={{color: '#888888', fontSize: 11}}>
@@ -117,30 +93,15 @@ class Friends extends React.Component {
         section: true,
         component: (
           <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-            <View
-              style={{
-                backgroundColor: '#CCCCCC',
-                height: 40,
-                width: 40,
-                borderRadius: 20,
-                justifyContent: 'center',
-                alignItems: 'center',
-                alignSelf: 'center',
-                overflow: 'hidden',
-              }}>
-              {this.props.user[this.state.modal]?.avatar ? (
-                <Image
-                  source={{
-                    uri:
-                      this.props.serverUrl?.slice(0, -1) +
-                      this.props.user[this.state.modal].avatar,
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              ) : (
-                <FontAwesomeIcon icon={faUser} color="#ffffff" size={20} />
-              )}
-            </View>
+            <Avatar
+              size={40}
+              uri={
+                this.props.user[this.state.modal]?.avatar
+                  ? this.props.serverUrl?.slice(0, -1) +
+                    this.props.user[this.state.modal].avatar
+                  : undefined
+              }
+            />
             <View style={{marginLeft: 10, alignSelf: 'center'}}>
               <Text
                 style={{
@@ -241,34 +202,15 @@ class Friends extends React.Component {
                 cancelTextStyle={{color: '#ff0000'}}
                 onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
                 <View style={{flexDirection: 'row'}}>
-                  <View
-                    style={{
-                      backgroundColor: '#CCCCCC',
-                      height: 35,
-                      width: 35,
-                      borderRadius: 25,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      marginRight: 10,
-                      overflow: 'hidden',
-                    }}>
-                    {this.props.user[v]?.avatar ? (
-                      <Image
-                        source={{
-                          uri:
-                            this.props.serverUrl?.slice(0, -1) +
-                            this.props.user[v].avatar,
-                        }}
-                        style={{height: 35, width: 35}}
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faUser}
-                        color="#ffffff"
-                        size={18}
-                      />
-                    )}
-                  </View>
+                  <Avatar
+                    size={35}
+                    uri={
+                      this.props.user[v]?.avatar
+                        ? this.props.serverUrl?.slice(0, -1) +
+                          this.props.user[v].avatar
+                        : undefined
+                    }
+                  />
                   <View
                     style={{justifyContent: 'center', alignContent: 'center'}}>
                     <Text>{this.props.user[v]?.username}</Text>

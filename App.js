@@ -150,6 +150,40 @@ function RelationshipHeaderRight(props) {
   );
 }
 
+function Avatar(props) {
+  return (
+    <View
+      style={{
+        backgroundColor: '#CCCCCC',
+        height: props.size,
+        width: props.size,
+        borderRadius:
+          props.round === undefined || props.round
+            ? props.size / 2
+            : props.size,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+        overflow: 'hidden',
+      }}>
+      {props.uri ? (
+        <Image
+          source={{
+            uri: props.uri,
+          }}
+          style={{height: props.size, width: props.size}}
+        />
+      ) : (
+        <FontAwesomeIcon
+          icon={props.isGroup !== undefined && props.isGroup ? faUsers : faUser}
+          color="#ffffff"
+          size={props.size / 2}
+        />
+      )}
+    </View>
+  );
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -923,31 +957,12 @@ class App extends React.Component {
                                 },
                               );
                             }}
-                            style={{
-                              backgroundColor: '#CCCCCC',
-                              height: 150,
-                              width: 150,
-                              borderRadius: 75,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              alignSelf: 'center',
-                              margin: 20,
-                              overflow: 'hidden',
-                            }}>
-                            {this.state.groupAvatar ? (
-                              <Image
-                                source={{
-                                  uri: this.state.groupAvatar.uri,
-                                }}
-                                style={{height: 150, width: 150}}
-                              />
-                            ) : (
-                              <FontAwesomeIcon
-                                icon={faUsers}
-                                color="#ffffff"
-                                size={75}
-                              />
-                            )}
+                            style={{alignSelf: 'center'}}>
+                            <Avatar
+                              size={150}
+                              isGroup
+                              uri={this.state.groupAvatar?.uri}
+                            />
                           </TouchableOpacity>
                           <TextInput
                             style={{
@@ -1130,5 +1145,5 @@ class App extends React.Component {
   }
 }
 
-export {BackHeaderLeft};
+export {BackHeaderLeft, Avatar};
 export default App;
