@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00E356F31AD99517003FC87E /* openchatclientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* openchatclientTests.m */; };
+		00E356F31AD99517003FC87E /* openchatTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* openchatTests.m */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		36F68794E92BDD10928D2FDA /* libPods-openchatclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54166830C695947A37C26F33 /* libPods-openchatclient.a */; };
+		36F68794E92BDD10928D2FDA /* libPods-openchat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54166830C695947A37C26F33 /* libPods-openchat.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		C20D959DFD3B1A39E75A3346 /* libPods-openchatclient-openchatclientTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C625B830F0FD018218C362C /* libPods-openchatclient-openchatclientTests.a */; };
+		C20D959DFD3B1A39E75A3346 /* libPods-openchat-openchatTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C625B830F0FD018218C362C /* libPods-openchat-openchatTests.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -22,27 +22,27 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = openchatclient;
+			remoteInfo = openchat;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		00E356EE1AD99517003FC87E /* openchatclientTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openchatclientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356EE1AD99517003FC87E /* openchatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = openchatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		00E356F21AD99517003FC87E /* openchatclientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = openchatclientTests.m; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* openchatclient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = openchatclient.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = openchatclient/AppDelegate.h; sourceTree = "<group>"; };
-		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = openchatclient/AppDelegate.m; sourceTree = "<group>"; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = openchatclient/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = openchatclient/Info.plist; sourceTree = "<group>"; };
-		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = openchatclient/main.m; sourceTree = "<group>"; };
-		317636F8E2B5CDFB58CDE0DA /* Pods-openchatclient-openchatclientTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchatclient-openchatclientTests.debug.xcconfig"; path = "Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests.debug.xcconfig"; sourceTree = "<group>"; };
-		3C625B830F0FD018218C362C /* libPods-openchatclient-openchatclientTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-openchatclient-openchatclientTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		54166830C695947A37C26F33 /* libPods-openchatclient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-openchatclient.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E71F62CC0BDBD9B07C18E22 /* Pods-openchatclient.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchatclient.release.xcconfig"; path = "Target Support Files/Pods-openchatclient/Pods-openchatclient.release.xcconfig"; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = openchatclient/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		AE581DC80F106B1E588480E0 /* Pods-openchatclient.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchatclient.debug.xcconfig"; path = "Target Support Files/Pods-openchatclient/Pods-openchatclient.debug.xcconfig"; sourceTree = "<group>"; };
-		DB76B5AF8070E20E3AC78DE8 /* Pods-openchatclient-openchatclientTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchatclient-openchatclientTests.release.xcconfig"; path = "Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests.release.xcconfig"; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* openchatTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = openchatTests.m; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* openchat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = openchat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = openchat/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = openchat/AppDelegate.m; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = openchat/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = openchat/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = openchat/main.m; sourceTree = "<group>"; };
+		317636F8E2B5CDFB58CDE0DA /* Pods-openchat-openchatTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchat-openchatTests.debug.xcconfig"; path = "Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests.debug.xcconfig"; sourceTree = "<group>"; };
+		3C625B830F0FD018218C362C /* libPods-openchat-openchatTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-openchat-openchatTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		54166830C695947A37C26F33 /* libPods-openchat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-openchat.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E71F62CC0BDBD9B07C18E22 /* Pods-openchat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchat.release.xcconfig"; path = "Target Support Files/Pods-openchat/Pods-openchat.release.xcconfig"; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = openchat/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		AE581DC80F106B1E588480E0 /* Pods-openchat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchat.debug.xcconfig"; path = "Target Support Files/Pods-openchat/Pods-openchat.debug.xcconfig"; sourceTree = "<group>"; };
+		DB76B5AF8070E20E3AC78DE8 /* Pods-openchat-openchatTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-openchat-openchatTests.release.xcconfig"; path = "Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -51,7 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C20D959DFD3B1A39E75A3346 /* libPods-openchatclient-openchatclientTests.a in Frameworks */,
+				C20D959DFD3B1A39E75A3346 /* libPods-openchat-openchatTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,20 +59,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				36F68794E92BDD10928D2FDA /* libPods-openchatclient.a in Frameworks */,
+				36F68794E92BDD10928D2FDA /* libPods-openchat.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00E356EF1AD99517003FC87E /* openchatclientTests */ = {
+		00E356EF1AD99517003FC87E /* openchatTests */ = {
 			isa = PBXGroup;
 			children = (
-				00E356F21AD99517003FC87E /* openchatclientTests.m */,
+				00E356F21AD99517003FC87E /* openchatTests.m */,
 				00E356F01AD99517003FC87E /* Supporting Files */,
 			);
-			path = openchatclientTests;
+			path = openchatTests;
 			sourceTree = "<group>";
 		};
 		00E356F01AD99517003FC87E /* Supporting Files */ = {
@@ -83,7 +83,7 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		13B07FAE1A68108700A75B9A /* openchatclient */ = {
+		13B07FAE1A68108700A75B9A /* openchat */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -93,15 +93,15 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
-			name = openchatclient;
+			name = openchat;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				54166830C695947A37C26F33 /* libPods-openchatclient.a */,
-				3C625B830F0FD018218C362C /* libPods-openchatclient-openchatclientTests.a */,
+				54166830C695947A37C26F33 /* libPods-openchat.a */,
+				3C625B830F0FD018218C362C /* libPods-openchat-openchatTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -116,9 +116,9 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* openchatclient */,
+				13B07FAE1A68108700A75B9A /* openchat */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
-				00E356EF1AD99517003FC87E /* openchatclientTests */,
+				00E356EF1AD99517003FC87E /* openchatTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				95CCF49E4091FD9816E93956 /* Pods */,
@@ -131,8 +131,8 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* openchatclient.app */,
-				00E356EE1AD99517003FC87E /* openchatclientTests.xctest */,
+				13B07F961A680F5B00A75B9A /* openchat.app */,
+				00E356EE1AD99517003FC87E /* openchatTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,10 +140,10 @@
 		95CCF49E4091FD9816E93956 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				AE581DC80F106B1E588480E0 /* Pods-openchatclient.debug.xcconfig */,
-				5E71F62CC0BDBD9B07C18E22 /* Pods-openchatclient.release.xcconfig */,
-				317636F8E2B5CDFB58CDE0DA /* Pods-openchatclient-openchatclientTests.debug.xcconfig */,
-				DB76B5AF8070E20E3AC78DE8 /* Pods-openchatclient-openchatclientTests.release.xcconfig */,
+				AE581DC80F106B1E588480E0 /* Pods-openchat.debug.xcconfig */,
+				5E71F62CC0BDBD9B07C18E22 /* Pods-openchat.release.xcconfig */,
+				317636F8E2B5CDFB58CDE0DA /* Pods-openchat-openchatTests.debug.xcconfig */,
+				DB76B5AF8070E20E3AC78DE8 /* Pods-openchat-openchatTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -151,9 +151,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		00E356ED1AD99517003FC87E /* openchatclientTests */ = {
+		00E356ED1AD99517003FC87E /* openchatTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "openchatclientTests" */;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "openchatTests" */;
 			buildPhases = (
 				1E27FEDCB1B944D1147F9DC0 /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
@@ -167,14 +167,14 @@
 			dependencies = (
 				00E356F51AD99517003FC87E /* PBXTargetDependency */,
 			);
-			name = openchatclientTests;
-			productName = openchatclientTests;
-			productReference = 00E356EE1AD99517003FC87E /* openchatclientTests.xctest */;
+			name = openchatTests;
+			productName = openchatTests;
+			productReference = 00E356EE1AD99517003FC87E /* openchatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		13B07F861A680F5B00A75B9A /* openchatclient */ = {
+		13B07F861A680F5B00A75B9A /* openchat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "openchatclient" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "openchat" */;
 			buildPhases = (
 				D4C281CA4F4998E8D6B8D0A1 /* [CP] Check Pods Manifest.lock */,
 				FD10A7F022414F080027D42C /* Start Packager */,
@@ -189,9 +189,9 @@
 			);
 			dependencies = (
 			);
-			name = openchatclient;
-			productName = openchatclient;
-			productReference = 13B07F961A680F5B00A75B9A /* openchatclient.app */;
+			name = openchat;
+			productName = openchat;
+			productReference = 13B07F961A680F5B00A75B9A /* openchat.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -211,7 +211,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "openchatclient" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "openchat" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -224,8 +224,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* openchatclient */,
-				00E356ED1AD99517003FC87E /* openchatclientTests */,
+				13B07F861A680F5B00A75B9A /* openchat */,
+				00E356ED1AD99517003FC87E /* openchatTests */,
 			);
 		};
 /* End PBXProject section */
@@ -270,15 +270,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		1E27FEDCB1B944D1147F9DC0 /* [CP] Check Pods Manifest.lock */ = {
@@ -296,7 +296,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-openchatclient-openchatclientTests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-openchat-openchatTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -309,15 +309,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchatclient-openchatclientTests/Pods-openchatclient-openchatclientTests-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchat-openchatTests/Pods-openchat-openchatTests-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		9C05A84CEE8FDEA2324E5B36 /* [CP] Copy Pods Resources */ = {
@@ -326,15 +326,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		A1CACE9E0AE6DD56BEC4807F /* [CP] Embed Pods Frameworks */ = {
@@ -343,15 +343,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchatclient/Pods-openchatclient-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-openchat/Pods-openchat-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		D4C281CA4F4998E8D6B8D0A1 /* [CP] Check Pods Manifest.lock */ = {
@@ -369,7 +369,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-openchatclient-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-openchat-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -402,7 +402,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00E356F31AD99517003FC87E /* openchatclientTests.m in Sources */,
+				00E356F31AD99517003FC87E /* openchatTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,7 +420,7 @@
 /* Begin PBXTargetDependency section */
 		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 13B07F861A680F5B00A75B9A /* openchatclient */;
+			target = 13B07F861A680F5B00A75B9A /* openchat */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -428,7 +428,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 317636F8E2B5CDFB58CDE0DA /* Pods-openchatclient-openchatclientTests.debug.xcconfig */;
+			baseConfigurationReference = 317636F8E2B5CDFB58CDE0DA /* Pods-openchat-openchatTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEVELOPMENT_TEAM = 27YQ6QDS2R;
@@ -436,7 +436,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				INFOPLIST_FILE = openchatclientTests/Info.plist;
+				INFOPLIST_FILE = openchatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -450,17 +450,17 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openchatclient.app/openchatclient";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openchat.app/openchat";
 			};
 			name = Debug;
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DB76B5AF8070E20E3AC78DE8 /* Pods-openchatclient-openchatclientTests.release.xcconfig */;
+			baseConfigurationReference = DB76B5AF8070E20E3AC78DE8 /* Pods-openchat-openchatTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
-				INFOPLIST_FILE = openchatclientTests/Info.plist;
+				INFOPLIST_FILE = openchatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -474,13 +474,13 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openchatclient.app/openchatclient";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openchat.app/openchat";
 			};
 			name = Release;
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE581DC80F106B1E588480E0 /* Pods-openchatclient.debug.xcconfig */;
+			baseConfigurationReference = AE581DC80F106B1E588480E0 /* Pods-openchat.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -489,7 +489,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 27YQ6QDS2R;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = openchatclient/Info.plist;
+				INFOPLIST_FILE = openchat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -500,7 +500,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = openchat;
-				PRODUCT_NAME = openchatclient;
+				PRODUCT_NAME = openchat;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -510,13 +510,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5E71F62CC0BDBD9B07C18E22 /* Pods-openchatclient.release.xcconfig */;
+			baseConfigurationReference = 5E71F62CC0BDBD9B07C18E22 /* Pods-openchat.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 27YQ6QDS2R;
-				INFOPLIST_FILE = openchatclient/Info.plist;
+				INFOPLIST_FILE = openchat/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -527,7 +527,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = openchat;
-				PRODUCT_NAME = openchatclient;
+				PRODUCT_NAME = openchat;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -659,7 +659,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "openchatclientTests" */ = {
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "openchatTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				00E356F61AD99517003FC87E /* Debug */,
@@ -668,7 +668,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "openchatclient" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "openchat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -677,7 +677,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "openchatclient" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "openchat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

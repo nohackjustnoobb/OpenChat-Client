@@ -1,12 +1,12 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-project './openchatclient.xcodeproj'
+project './openchat.xcodeproj'
 
 pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
 
 platform :ios, '11.0'
 
-target 'openchatclient' do
+target 'openchat' do
   config = use_native_modules!
 
   use_react_native!(
@@ -15,7 +15,7 @@ target 'openchatclient' do
     :hermes_enabled => false
   )
 
-  target 'openchatclientTests' do
+  target 'openchatTests' do
     inherit! :complete
     # Pods for testing
   end
