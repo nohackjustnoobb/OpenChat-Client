@@ -22,6 +22,11 @@ import {
   faPaperPlane,
   faCamera,
   faImage,
+  faThumbtack,
+  faReply,
+  faCopy,
+  faInfo,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   SafeAreaView,
@@ -32,6 +37,14 @@ import FitImage from 'react-native-fit-image';
 import ImageView from 'react-native-image-viewing';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import ModalSelector from 'react-native-modal-selector';
+import {
+  Menu,
+  MenuOptions,
+  MenuTrigger,
+  renderers,
+  MenuOption,
+  withMenuContext,
+} from 'react-native-popup-menu';
 
 import {Avatar} from '../App';
 
@@ -69,6 +82,42 @@ function ChatHeaderLeft(props) {
   );
 }
 
+function MenuItem(props) {
+  return (
+    <>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: 3,
+        }}>
+        <Text
+          style={{
+            color: props.color === undefined ? '#6873F2' : props.color,
+            fontWeight: '300',
+          }}>
+          {props.title}
+        </Text>
+        <FontAwesomeIcon
+          icon={props.icon}
+          color={props.color === undefined ? '#6873F2' : props.color}
+        />
+      </View>
+      <View
+        style={{
+          backgroundColor: '#eeeeee',
+          height: 1,
+          width: '100%',
+          alignSelf: 'center',
+          margin: 5,
+          display:
+            props.underline === undefined || props.underline ? 'flex' : 'none',
+        }}
+      />
+    </>
+  );
+}
+
 // Chat Page
 class Chat extends React.Component {
   constructor(props) {
@@ -82,6 +131,7 @@ class Chat extends React.Component {
       confirm: false,
     };
     this.messageCounter = 0;
+    this.scrollHeight = [];
   }
 
   componentDidMount() {
@@ -116,7 +166,7 @@ class Chat extends React.Component {
       !this.props.message[group.id] ||
       this.props.message[group.id].length < 50
     ) {
-      this.getGroupMessageByID(group.id);
+      this.getGroupMessageByID(group.id, false);
     }
 
     this.keyboardDidShowSubscription = Keyboard.addListener(
@@ -134,9 +184,12 @@ class Chat extends React.Component {
     this.keyboardDidHideSubscription.remove();
   }
 
-  async getGroupMessageByID(id) {
-    this.messageCounter++;
-    return await this.props.getGroupMessageByID(id);
+  async getGroupMessageByID(id, undate = true) {
+    this.newMessage = await this.props.getGroupMessageByID(id);
+    if (undate && (this.newMessage || this.messageCounter === 0)) {
+      this.messageCounter++;
+    }
+    return;
   }
 
   getImage(useCamera) {
@@ -185,6 +238,24 @@ class Chat extends React.Component {
           messageDate.getUTCMonth() !== previousMessageDate.getUTCMonth() ||
           messageDate.getUTCDate() !== previousMessageDate.getUTCDate();
       }
+
+      const AdditionImage = withMenuContext(props => (
+        <TouchableWithoutFeedback
+          onPress={() => this.setState({imageView: i})}
+          onLongPress={() => props.ctx.menuActions.openMenu(`${v.id}`)}>
+          <FitImage
+            source={{
+              uri: this.props.serverUrl?.slice(0, -1) + v.additionImage,
+            }}
+            style={{
+              marginBottom: 3,
+              overflow: 'hidden',
+              borderRadius: 3,
+            }}
+            resizeMode="contain"
+          />
+        </TouchableWithoutFeedback>
+      ));
 
       return (
         <React.Fragment key={v.id}>
@@ -243,91 +314,125 @@ class Chat extends React.Component {
                 }}>
                 {this.props.user[v.owner]?.username}
               </Text>
-              <DropShadow
-                style={{
-                  shadowColor: '#000000',
-                  shadowOffset: {
-                    width: -1,
-                    height: 1,
-                  },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 1,
+              <Menu
+                name={`${v.id}`}
+                renderer={renderers.Popover}
+                rendererProps={{
+                  preferredPlacement: 'right',
+                  anchorStyle: {zIndex: 2, backgroundColor: '#ffffffee'},
                 }}>
-                <View
-                  style={{
-                    padding: v.additionImage ? 5 : 7,
-                    borderRadius: 7,
-                    backgroundColor:
-                      v.owner === this.props.userInfo.id
-                        ? '#ffffff'
-                        : '#6873F2',
-                    marginLeft: userDisplay === 'none' ? (newDate ? 0 : 55) : 0,
-                    marginRight: newDate ? 70 : 15,
-                    width: v.additionImage
-                      ? Dimensions.get('window').width - 75
-                      : undefined,
-                    paddingBottom: 2,
+                <MenuTrigger
+                  triggerOnLongPress
+                  customStyles={{
+                    TriggerTouchableComponent: TouchableWithoutFeedback,
                   }}>
-                  {v.additionImage ? (
-                    <TouchableWithoutFeedback
-                      onPress={() => this.setState({imageView: i})}>
-                      <FitImage
-                        source={{
-                          uri:
-                            this.props.serverUrl?.slice(0, -1) +
-                            v.additionImage,
-                        }}
-                        style={{
-                          marginBottom: 3,
-                          overflow: 'hidden',
-                          borderRadius: 3,
-                        }}
-                        resizeMode="contain"
-                      />
-                    </TouchableWithoutFeedback>
-                  ) : (
-                    <View />
-                  )}
-                  {v.additionFile ? (
-                    <View>
-                      <Text style={{color: 'red'}}>I am File</Text>
-                    </View>
-                  ) : (
-                    <View />
-                  )}
-                  {v.content ? (
-                    <Text
-                      style={{
-                        color:
-                          v.owner === this.props.userInfo.id
-                            ? '#000000'
-                            : '#ffffff',
-                      }}>
-                      {v.content}
-                    </Text>
-                  ) : (
-                    <View />
-                  )}
-
-                  <Text
+                  <DropShadow
                     style={{
-                      fontSize: 10,
-                      opacity: 0.6,
-                      fontWeight: '300',
-                      color:
-                        v.owner === this.props.userInfo.id
-                          ? '#000000'
-                          : '#ffffff',
-                      marginTop: 3,
+                      shadowColor: '#000000',
+                      shadowOffset: {
+                        width: -1,
+                        height: 1,
+                      },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 1,
                     }}>
-                    {messageDate.toLocaleString('en-US', {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                      hour12: true,
-                    })}
-                  </Text>
-                </View>
-              </DropShadow>
+                    <View
+                      style={{
+                        padding: v.additionImage ? 5 : 7,
+                        borderRadius: 7,
+                        backgroundColor:
+                          v.owner === this.props.userInfo.id
+                            ? '#ffffff'
+                            : '#6873F2',
+                        marginLeft:
+                          userDisplay === 'none' ? (newDate ? 0 : 55) : 0,
+                        marginRight: newDate ? 70 : 15,
+                        width: v.additionImage
+                          ? Dimensions.get('window').width - 75
+                          : undefined,
+                        paddingBottom: 2,
+                      }}>
+                      {v.additionImage ? <AdditionImage /> : <View />}
+                      {v.additionFile ? (
+                        <View>
+                          <Text style={{color: 'red'}}>I am File</Text>
+                        </View>
+                      ) : (
+                        <View />
+                      )}
+                      {v.content ? (
+                        <Text
+                          style={{
+                            color:
+                              v.owner === this.props.userInfo.id
+                                ? '#000000'
+                                : '#ffffff',
+                          }}>
+                          {v.content}
+                        </Text>
+                      ) : (
+                        <View />
+                      )}
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          opacity: 0.6,
+                          fontWeight: '300',
+                          color:
+                            v.owner === this.props.userInfo.id
+                              ? '#000000'
+                              : '#ffffff',
+                          marginTop: 3,
+                        }}>
+                        {messageDate.toLocaleString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true,
+                        })}
+                      </Text>
+                    </View>
+                  </DropShadow>
+                </MenuTrigger>
+                <MenuOptions
+                  customStyles={{
+                    optionsContainer: {
+                      shadowColor: '#000000',
+                      shadowOffset: {
+                        width: 1,
+                        height: 1,
+                      },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      borderRadius: 10,
+                      width: 150,
+                      padding: 10,
+                      backgroundColor: '#ffffffee',
+                    },
+                    optionWrapper: {padding: 0},
+                    OptionTouchableComponent: TouchableOpacity,
+                  }}>
+                  <MenuOption>
+                    <MenuItem title="Pin" icon={faThumbtack} />
+                  </MenuOption>
+                  <MenuOption>
+                    <MenuItem title="Reply" icon={faReply} />
+                  </MenuOption>
+                  <MenuOption>
+                    <MenuItem title="Copy" icon={faCopy} />
+                  </MenuOption>
+                  <MenuOption>
+                    <MenuItem title="Info" icon={faInfo} />
+                  </MenuOption>
+                  <MenuOption>
+                    <MenuItem
+                      title="Delete"
+                      icon={faTrash}
+                      color="#ff6666"
+                      underline={false}
+                    />
+                  </MenuOption>
+                </MenuOptions>
+              </Menu>
             </View>
           </View>
         </React.Fragment>
@@ -552,26 +657,20 @@ class Chat extends React.Component {
                         this.props.route.params.group,
                       );
                     }
-                    setTimeout(() => (this.getMessage = false), 2000);
+                    setTimeout(() => (this.getMessage = false), 1000);
                   }
                 }}
                 contentContainerStyle={{paddingVertical: 5}}
                 onContentSizeChange={(w, h) => {
-                  if (this.messageCounter <= 1) {
+                  if (this.messageCounter === 0) {
                     this.messageScrollView.scrollToEnd({animated: false});
-                  }
-                  if (
-                    !this.scrollHeight ||
-                    this.scrollHeight[0] === this.messageCounter
-                  ) {
-                    this.scrollHeight = [this.messageCounter, h];
-                  } else {
+                  } else if (this.newMessage) {
                     this.messageScrollView.scrollTo({
-                      y: h - this.scrollHeight[1],
+                      y: h - this.scrollHeight[this.scrollHeight.length - 2],
                       animated: false,
                     });
-                    this.scrollHeight = [this.messageCounter, h];
                   }
+                  this.scrollHeight[this.messageCounter] = h;
                 }}>
                 {messagesView}
               </ScrollView>
@@ -613,7 +712,7 @@ class Chat extends React.Component {
                   onFocus={() =>
                     setTimeout(
                       () =>
-                        this.state.messageScrollView.scrollToEnd({
+                        this.messageScrollView.scrollToEnd({
                           animated: true,
                         }),
                       50,

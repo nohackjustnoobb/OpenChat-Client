@@ -20,6 +20,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import {MenuProvider} from 'react-native-popup-menu';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faCog,
@@ -395,8 +396,10 @@ class App extends React.Component {
 
       var group = this.state.group;
       group[id].unReadMessage = null;
-      this.setState({message: message, group: group});
-      return;
+      if (jsonResult.length !== 0) {
+        this.setState({message: message, group: group});
+      }
+      return jsonResult.length !== 0;
     } catch (e) {
       Alert.alert('Failed To Get Messages');
     }
@@ -756,396 +759,399 @@ class App extends React.Component {
 
   render() {
     return (
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName={this.state.token ? 'Home' : 'Login'}
-            headerMode="screen">
-            <Stack.Screen
-              name="Home"
-              options={navigation => ({
-                headerTitle: props => (
-                  <HomeHeaderTitle
-                    wsConnected={this.state.wsConnected}
+      <MenuProvider>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName={this.state.token ? 'Home' : 'Login'}
+              headerMode="screen">
+              <Stack.Screen
+                name="Home"
+                options={navigation => ({
+                  headerTitle: props => (
+                    <HomeHeaderTitle
+                      wsConnected={this.state.wsConnected}
+                      {...props}
+                    />
+                  ),
+                  headerLeft: props => (
+                    <HomeHeaderLeft navigation={navigation} {...props} />
+                  ),
+                  headerRight: props => (
+                    <HomeHeaderRight navigation={navigation} {...props} />
+                  ),
+                  headerStyle: {
+                    height: getStatusBarHeight() + 70,
+                  },
+                  gestureEnabled: false,
+                })}>
+                {props => (
+                  <Home
                     {...props}
-                  />
-                ),
-                headerLeft: props => (
-                  <HomeHeaderLeft navigation={navigation} {...props} />
-                ),
-                headerRight: props => (
-                  <HomeHeaderRight navigation={navigation} {...props} />
-                ),
-                headerStyle: {
-                  height: getStatusBarHeight() + 70,
-                },
-                gestureEnabled: false,
-              })}>
-              {props => (
-                <Home
-                  {...props}
-                  setState={this.setState.bind(this)}
-                  serverUrl={this.state.serverUrl}
-                  userInfo={this.state.userInfo}
-                  token={this.state.token}
-                  wsConnected={this.state.wsConnected}
-                  serverInfo={this.state.serverInfo}
-                  user={this.state.user}
-                  group={this.state.group}
-                  message={this.state.message}
-                  disconnectServer={this.disconnectServer.bind(this)}
-                  getServerInfo={this.getServerInfo.bind(this)}
-                  connectWS={this.connectWS.bind(this)}
-                  getUserByID={this.getUserByID.bind(this)}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Login"
-              options={{headerShown: false, gestureEnabled: false}}>
-              {props => (
-                <Login
-                  {...props}
-                  setState={this.setState.bind(this)}
-                  serverUrl={this.state.serverUrl}
-                  serverInfo={this.state.serverInfo}
-                  getServerInfo={this.getServerInfo.bind(this)}
-                  token={this.state.token}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Settings"
-              options={{
-                headerLeft: props => <BackHeaderLeft {...props} />,
-              }}>
-              {props => (
-                <Settings
-                  userInfo={this.state.userInfo}
-                  serverInfo={this.state.serverInfo}
-                  serverUrl={this.state.serverUrl}
-                  patchUserInfo={this.patchUserInfo.bind(this)}
-                  setState={this.setState.bind(this)}
-                  disconnectServer={this.disconnectServer.bind(this)}
-                  logout={this.logout.bind(this)}
-                  {...props}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Chat"
-              options={{
-                headerTitle: '',
-              }}>
-              {props => (
-                <Chat
-                  setState={this.setState.bind(this)}
-                  getGroupMessageByID={this.getGroupMessageByID.bind(this)}
-                  getUserByID={this.getUserByID.bind(this)}
-                  sendMessage={this.sendMessage.bind(this)}
-                  setReadByID={this.setReadByID.bind(this)}
-                  serverUrl={this.state.serverUrl}
-                  group={this.state.group}
-                  user={this.state.user}
-                  message={this.state.message}
-                  userInfo={this.state.userInfo}
-                  {...props}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="GroupInfo">
-              {props => (
-                <GroupInfo
-                  group={this.state.group}
-                  userInfo={this.state.userInfo}
-                  user={this.state.user}
-                  serverUrl={this.state.serverUrl}
-                  friends={this.state.friends}
-                  blocked={this.state.blocked}
-                  patchGroupInfo={this.patchGroupInfo.bind(this)}
-                  getUserByID={this.getUserByID.bind(this)}
-                  deleteGroupByID={this.deleteGroupByID.bind(this)}
-                  toggleUserBlock={this.toggleUserBlock.bind(this)}
-                  exitGroupByID={this.exitGroupByID.bind(this)}
-                  toggleAdmin={this.toggleAdmin.bind(this)}
-                  kickUser={this.kickUser.bind(this)}
-                  addUsers={this.addUsers.bind(this)}
-                  {...props}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Relationship"
-              options={navigation => ({
-                headerLeft: props => <BackHeaderLeft {...props} />,
-                headerRight: props => (
-                  <RelationshipHeaderRight
-                    navigation={navigation}
                     setState={this.setState.bind(this)}
+                    serverUrl={this.state.serverUrl}
+                    userInfo={this.state.userInfo}
+                    token={this.state.token}
+                    wsConnected={this.state.wsConnected}
+                    serverInfo={this.state.serverInfo}
+                    user={this.state.user}
+                    group={this.state.group}
+                    message={this.state.message}
+                    disconnectServer={this.disconnectServer.bind(this)}
+                    getServerInfo={this.getServerInfo.bind(this)}
+                    connectWS={this.connectWS.bind(this)}
+                    getUserByID={this.getUserByID.bind(this)}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Login"
+                options={{headerShown: false, gestureEnabled: false}}>
+                {props => (
+                  <Login
+                    {...props}
+                    setState={this.setState.bind(this)}
+                    serverUrl={this.state.serverUrl}
+                    serverInfo={this.state.serverInfo}
+                    getServerInfo={this.getServerInfo.bind(this)}
+                    token={this.state.token}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Settings"
+                options={{
+                  headerLeft: props => <BackHeaderLeft {...props} />,
+                }}>
+                {props => (
+                  <Settings
+                    userInfo={this.state.userInfo}
+                    serverInfo={this.state.serverInfo}
+                    serverUrl={this.state.serverUrl}
+                    patchUserInfo={this.patchUserInfo.bind(this)}
+                    setState={this.setState.bind(this)}
+                    disconnectServer={this.disconnectServer.bind(this)}
+                    logout={this.logout.bind(this)}
                     {...props}
                   />
-                ),
-              })}>
-              {props => (
-                <>
-                  <Modal
-                    visible={this.state.modal}
-                    presentationStyle="formSheet"
-                    animationType="slide"
-                    style={{flex: 1}}>
-                    <SafeAreaView style={{flex: 1}}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}>
-                        <Button
-                          title="Cancel"
-                          type="clear"
-                          containerStyle={{marginLeft: 15, marginTop: 10}}
-                          titleStyle={{color: '#ff0000'}}
-                          onPress={() => {
-                            this.setState({
-                              modal: false,
-                              selectedUser: [],
-                              next: false,
-                              groupAvatar: null,
-                              groupName: '',
-                            });
-                          }}
-                        />
-                        <Text
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Chat"
+                options={{
+                  headerTitle: '',
+                }}>
+                {props => (
+                  <Chat
+                    setState={this.setState.bind(this)}
+                    getGroupMessageByID={this.getGroupMessageByID.bind(this)}
+                    getUserByID={this.getUserByID.bind(this)}
+                    sendMessage={this.sendMessage.bind(this)}
+                    setReadByID={this.setReadByID.bind(this)}
+                    serverUrl={this.state.serverUrl}
+                    group={this.state.group}
+                    user={this.state.user}
+                    message={this.state.message}
+                    userInfo={this.state.userInfo}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="GroupInfo">
+                {props => (
+                  <GroupInfo
+                    group={this.state.group}
+                    userInfo={this.state.userInfo}
+                    user={this.state.user}
+                    serverUrl={this.state.serverUrl}
+                    friends={this.state.friends}
+                    blocked={this.state.blocked}
+                    patchGroupInfo={this.patchGroupInfo.bind(this)}
+                    getUserByID={this.getUserByID.bind(this)}
+                    deleteGroupByID={this.deleteGroupByID.bind(this)}
+                    toggleUserBlock={this.toggleUserBlock.bind(this)}
+                    exitGroupByID={this.exitGroupByID.bind(this)}
+                    toggleAdmin={this.toggleAdmin.bind(this)}
+                    kickUser={this.kickUser.bind(this)}
+                    addUsers={this.addUsers.bind(this)}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Relationship"
+                options={navigation => ({
+                  headerLeft: props => <BackHeaderLeft {...props} />,
+                  headerRight: props => (
+                    <RelationshipHeaderRight
+                      navigation={navigation}
+                      setState={this.setState.bind(this)}
+                      {...props}
+                    />
+                  ),
+                })}>
+                {props => (
+                  <>
+                    <Modal
+                      visible={this.state.modal}
+                      presentationStyle="formSheet"
+                      animationType="slide"
+                      style={{flex: 1}}>
+                      <SafeAreaView style={{flex: 1}}>
+                        <View
                           style={{
-                            fontSize: 14,
-                            fontWeight: '600',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                           }}>
-                          Add Participants
-                        </Text>
-                        <Button
-                          title={this.state.next ? 'Create' : 'Next'}
-                          type="clear"
-                          containerStyle={{marginRight: 15, marginTop: 10}}
-                          titleStyle={{color: '#6873F2'}}
-                          disabled={!this.state.selectedUser.length}
-                          onPress={() => {
-                            if (this.state.next) {
-                              if (this.state.groupName) {
-                                this.createGroup();
-                                this.setState({
-                                  modal: false,
-                                  selectedUser: [],
-                                  next: false,
-                                  groupAvatar: null,
-                                  groupName: '',
-                                });
-                              } else {
-                                Alert.alert('Please enter group name');
-                              }
-                            } else {
-                              this.setState({next: true});
-                            }
-                          }}
-                        />
-                      </View>
-                      {this.state.next ? (
-                        <View style={{flex: 1}}>
-                          <TouchableOpacity
+                          <Button
+                            title="Cancel"
+                            type="clear"
+                            containerStyle={{marginLeft: 15, marginTop: 10}}
+                            titleStyle={{color: '#ff0000'}}
                             onPress={() => {
-                              launchImageLibrary(
-                                {mediaType: 'photo'},
-                                response => {
-                                  if (!response.didCancel)
-                                    this.setState({
-                                      groupAvatar: response.assets[0],
-                                    });
-                                },
-                              );
+                              this.setState({
+                                modal: false,
+                                selectedUser: [],
+                                next: false,
+                                groupAvatar: null,
+                                groupName: '',
+                              });
                             }}
-                            style={{alignSelf: 'center'}}>
-                            <Avatar
-                              size={150}
-                              isGroup
-                              uri={this.state.groupAvatar?.uri}
-                            />
-                          </TouchableOpacity>
-                          <TextInput
+                          />
+                          <Text
                             style={{
-                              width: '90%',
-                              minHeight: 35,
-                              backgroundColor: '#eeeeee',
-                              borderRadius: 10,
-                              padding: 10,
-                              alignSelf: 'center',
-                              marginTop: 10,
+                              fontSize: 14,
+                              fontWeight: '600',
+                            }}>
+                            Add Participants
+                          </Text>
+                          <Button
+                            title={this.state.next ? 'Create' : 'Next'}
+                            type="clear"
+                            containerStyle={{marginRight: 15, marginTop: 10}}
+                            titleStyle={{color: '#6873F2'}}
+                            disabled={!this.state.selectedUser.length}
+                            onPress={() => {
+                              if (this.state.next) {
+                                if (this.state.groupName) {
+                                  this.createGroup();
+                                  this.setState({
+                                    modal: false,
+                                    selectedUser: [],
+                                    next: false,
+                                    groupAvatar: null,
+                                    groupName: '',
+                                  });
+                                } else {
+                                  Alert.alert('Please enter group name');
+                                }
+                              } else {
+                                this.setState({next: true});
+                              }
                             }}
-                            placeholder="Group Name"
-                            placeholderTextColor="#aaaaaa"
-                            onChangeText={v => this.setState({groupName: v})}
-                            value={this.state.groupName}
                           />
                         </View>
-                      ) : (
-                        <ScrollView
-                          style={{
-                            flex: 1,
-                            padding: 10,
-                          }}>
-                          {this.state.friends.map(v => (
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                marginBottom: 5,
+                        {this.state.next ? (
+                          <View style={{flex: 1}}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                launchImageLibrary(
+                                  {mediaType: 'photo'},
+                                  response => {
+                                    if (!response.didCancel)
+                                      this.setState({
+                                        groupAvatar: response.assets[0],
+                                      });
+                                  },
+                                );
                               }}
-                              key={v.id}>
-                              <View
-                                style={{
-                                  backgroundColor: '#CCCCCC',
-                                  height: 35,
-                                  width: 35,
-                                  borderRadius: 25,
-                                  justifyContent: 'center',
-                                  alignItems: 'center',
-                                  marginRight: 10,
-                                  overflow: 'hidden',
-                                }}>
-                                {this.state.user[v]?.avatar ? (
-                                  <Image
-                                    source={{
-                                      uri:
-                                        this.state.serverUrl?.slice(0, -1) +
-                                        this.state.user[v].avatar,
-                                    }}
-                                    style={{height: 35, width: 35}}
-                                  />
-                                ) : (
-                                  <FontAwesomeIcon
-                                    icon={faUser}
-                                    color="#ffffff"
-                                    size={18}
-                                  />
-                                )}
-                              </View>
-                              <View
-                                style={{
-                                  justifyContent: 'center',
-                                  alignContent: 'center',
-                                }}>
-                                <Text>{this.state.user[v]?.username}</Text>
-                                <Text style={{color: '#888888', fontSize: 11}}>
-                                  {this.state.user[v]?.email}
-                                </Text>
-                              </View>
-                              <CheckBox
-                                checkedIcon="dot-circle-o"
-                                uncheckedIcon="circle-o"
-                                checkedColor="#6873F2"
-                                containerStyle={{
-                                  position: 'absolute',
-                                  right: -5,
-                                }}
-                                checked={Boolean(
-                                  this.state.selectedUser.find(e => e === v),
-                                )}
-                                onPress={() => {
-                                  var selectedUser = this.state.selectedUser;
-                                  if (
-                                    this.state.selectedUser.find(e => e === v)
-                                  ) {
-                                    selectedUser.pop(v);
-                                  } else {
-                                    selectedUser.push(v);
-                                  }
-                                  this.setState({selectedUser: selectedUser});
-                                }}
+                              style={{alignSelf: 'center'}}>
+                              <Avatar
+                                size={150}
+                                isGroup
+                                uri={this.state.groupAvatar?.uri}
                               />
-                            </View>
-                          ))}
-                        </ScrollView>
-                      )}
-                    </SafeAreaView>
-                  </Modal>
-                  <Tab.Navigator>
-                    <Tab.Screen
-                      name="Friends"
-                      options={{
-                        headerShown: false,
-                        tabBarActiveTintColor: '#6873F2',
-                        tabBarIcon: iconProps => (
-                          <FontAwesomeIcon
-                            icon={faUserFriends}
-                            {...iconProps}
+                            </TouchableOpacity>
+                            <TextInput
+                              style={{
+                                width: '90%',
+                                minHeight: 35,
+                                backgroundColor: '#eeeeee',
+                                borderRadius: 10,
+                                padding: 10,
+                                alignSelf: 'center',
+                                marginTop: 10,
+                              }}
+                              placeholder="Group Name"
+                              placeholderTextColor="#aaaaaa"
+                              onChangeText={v => this.setState({groupName: v})}
+                              value={this.state.groupName}
+                            />
+                          </View>
+                        ) : (
+                          <ScrollView
+                            style={{
+                              flex: 1,
+                              padding: 10,
+                            }}>
+                            {this.state.friends.map(v => (
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  marginBottom: 5,
+                                }}
+                                key={v.id}>
+                                <View
+                                  style={{
+                                    backgroundColor: '#CCCCCC',
+                                    height: 35,
+                                    width: 35,
+                                    borderRadius: 25,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    marginRight: 10,
+                                    overflow: 'hidden',
+                                  }}>
+                                  {this.state.user[v]?.avatar ? (
+                                    <Image
+                                      source={{
+                                        uri:
+                                          this.state.serverUrl?.slice(0, -1) +
+                                          this.state.user[v].avatar,
+                                      }}
+                                      style={{height: 35, width: 35}}
+                                    />
+                                  ) : (
+                                    <FontAwesomeIcon
+                                      icon={faUser}
+                                      color="#ffffff"
+                                      size={18}
+                                    />
+                                  )}
+                                </View>
+                                <View
+                                  style={{
+                                    justifyContent: 'center',
+                                    alignContent: 'center',
+                                  }}>
+                                  <Text>{this.state.user[v]?.username}</Text>
+                                  <Text
+                                    style={{color: '#888888', fontSize: 11}}>
+                                    {this.state.user[v]?.email}
+                                  </Text>
+                                </View>
+                                <CheckBox
+                                  checkedIcon="dot-circle-o"
+                                  uncheckedIcon="circle-o"
+                                  checkedColor="#6873F2"
+                                  containerStyle={{
+                                    position: 'absolute',
+                                    right: -5,
+                                  }}
+                                  checked={Boolean(
+                                    this.state.selectedUser.find(e => e === v),
+                                  )}
+                                  onPress={() => {
+                                    var selectedUser = this.state.selectedUser;
+                                    if (
+                                      this.state.selectedUser.find(e => e === v)
+                                    ) {
+                                      selectedUser.pop(v);
+                                    } else {
+                                      selectedUser.push(v);
+                                    }
+                                    this.setState({selectedUser: selectedUser});
+                                  }}
+                                />
+                              </View>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </SafeAreaView>
+                    </Modal>
+                    <Tab.Navigator>
+                      <Tab.Screen
+                        name="Friends"
+                        options={{
+                          headerShown: false,
+                          tabBarActiveTintColor: '#6873F2',
+                          tabBarIcon: iconProps => (
+                            <FontAwesomeIcon
+                              icon={faUserFriends}
+                              {...iconProps}
+                            />
+                          ),
+                        }}>
+                        {tabProps => (
+                          <Friends
+                            friends={this.state.friends}
+                            friendRequest={this.state.friendRequest}
+                            user={this.state.user}
+                            userInfo={this.state.userInfo}
+                            serverUrl={this.state.serverUrl}
+                            cancelRequest={this.cancelRequest.bind(this)}
+                            removeFriend={this.removeFriend.bind(this)}
+                            replyFriendRequest={this.replyFriendRequest.bind(
+                              this,
+                            )}
+                            toggleUserBlock={this.toggleUserBlock.bind(this)}
+                            createDM={this.createDM.bind(this)}
+                            getUserByID={this.getUserByID.bind(this)}
+                            {...tabProps}
+                            {...props}
                           />
-                        ),
-                      }}>
-                      {tabProps => (
-                        <Friends
-                          friends={this.state.friends}
-                          friendRequest={this.state.friendRequest}
-                          user={this.state.user}
-                          userInfo={this.state.userInfo}
-                          serverUrl={this.state.serverUrl}
-                          cancelRequest={this.cancelRequest.bind(this)}
-                          removeFriend={this.removeFriend.bind(this)}
-                          replyFriendRequest={this.replyFriendRequest.bind(
-                            this,
-                          )}
-                          toggleUserBlock={this.toggleUserBlock.bind(this)}
-                          createDM={this.createDM.bind(this)}
-                          getUserByID={this.getUserByID.bind(this)}
-                          {...tabProps}
-                          {...props}
-                        />
-                      )}
-                    </Tab.Screen>
-                    <Tab.Screen
-                      name="Blocked"
-                      options={{
-                        headerShown: false,
-                        tabBarActiveTintColor: '#6873F2',
-                        tabBarIcon: iconProps => (
-                          <FontAwesomeIcon icon={faBan} {...iconProps} />
-                        ),
-                      }}>
-                      {tabProps => (
-                        <Blocked
-                          blocked={this.state.blocked}
-                          user={this.state.user}
-                          serverUrl={this.state.serverUrl}
-                          toggleUserBlock={this.toggleUserBlock.bind(this)}
-                          getUserByID={this.getUserByID.bind(this)}
-                          {...tabProps}
-                          {...props}
-                        />
-                      )}
-                    </Tab.Screen>
-                  </Tab.Navigator>
-                </>
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="Search"
-              options={{headerLeft: props => <BackHeaderLeft {...props} />}}>
-              {props => (
-                <Search
-                  friends={this.state.friends}
-                  blocked={this.state.blocked}
-                  friendRequest={this.state.friendRequest}
-                  serverUrl={this.state.serverUrl}
-                  userInfo={this.state.userInfo}
-                  searchResult={this.state.searchResult}
-                  setState={this.setState.bind(this)}
-                  sendFriendRequest={this.sendFriendRequest.bind(this)}
-                  replyFriendRequest={this.replyFriendRequest.bind(this)}
-                  searchUser={this.searchUser.bind(this)}
-                  {...props}
-                />
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
+                        )}
+                      </Tab.Screen>
+                      <Tab.Screen
+                        name="Blocked"
+                        options={{
+                          headerShown: false,
+                          tabBarActiveTintColor: '#6873F2',
+                          tabBarIcon: iconProps => (
+                            <FontAwesomeIcon icon={faBan} {...iconProps} />
+                          ),
+                        }}>
+                        {tabProps => (
+                          <Blocked
+                            blocked={this.state.blocked}
+                            user={this.state.user}
+                            serverUrl={this.state.serverUrl}
+                            toggleUserBlock={this.toggleUserBlock.bind(this)}
+                            getUserByID={this.getUserByID.bind(this)}
+                            {...tabProps}
+                            {...props}
+                          />
+                        )}
+                      </Tab.Screen>
+                    </Tab.Navigator>
+                  </>
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Search"
+                options={{headerLeft: props => <BackHeaderLeft {...props} />}}>
+                {props => (
+                  <Search
+                    friends={this.state.friends}
+                    blocked={this.state.blocked}
+                    friendRequest={this.state.friendRequest}
+                    serverUrl={this.state.serverUrl}
+                    userInfo={this.state.userInfo}
+                    searchResult={this.state.searchResult}
+                    setState={this.setState.bind(this)}
+                    sendFriendRequest={this.sendFriendRequest.bind(this)}
+                    replyFriendRequest={this.replyFriendRequest.bind(this)}
+                    searchUser={this.searchUser.bind(this)}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </MenuProvider>
     );
   }
 }
