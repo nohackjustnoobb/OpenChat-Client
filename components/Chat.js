@@ -14,6 +14,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Modal,
+  Image,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -243,7 +244,7 @@ class Chat extends React.Component {
         <TouchableWithoutFeedback
           onPress={() => this.setState({imageView: i})}
           onLongPress={() => props.ctx.menuActions.openMenu(`${v.id}`)}>
-          <FitImage
+          <Image
             source={{
               uri: this.props.serverUrl?.slice(0, -1) + v.additionImage,
             }}
@@ -251,8 +252,10 @@ class Chat extends React.Component {
               marginBottom: 3,
               overflow: 'hidden',
               borderRadius: 3,
+              width: Dimensions.get('window').width - 75,
+              height: ((Dimensions.get('window').width - 75) * 10) / 16,
             }}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </TouchableWithoutFeedback>
       ));
@@ -347,9 +350,6 @@ class Chat extends React.Component {
                         marginLeft:
                           userDisplay === 'none' ? (newDate ? 0 : 55) : 0,
                         marginRight: newDate ? 70 : 15,
-                        width: v.additionImage
-                          ? Dimensions.get('window').width - 75
-                          : undefined,
                         paddingBottom: 2,
                       }}>
                       {v.additionImage ? <AdditionImage /> : <View />}
@@ -666,7 +666,7 @@ class Chat extends React.Component {
                     this.messageScrollView.scrollToEnd({animated: false});
                   } else if (this.newMessage) {
                     this.messageScrollView.scrollTo({
-                      y: h - this.scrollHeight[this.scrollHeight.length - 2],
+                      y: h - this.scrollHeight[this.scrollHeight.length - 1],
                       animated: false,
                     });
                   }
