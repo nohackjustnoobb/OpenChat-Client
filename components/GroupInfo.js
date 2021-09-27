@@ -211,10 +211,10 @@ class GroupInfo extends React.Component {
           {insets => (
             <ModalSelector
               disabled={
-                (!this.group.groupAdmins.find(
-                  id => id === this.props.userInfo.id,
-                ) &&
-                  this.group.owner !== this.props.userInfo.id) ||
+                this.group.groupAdmins.find(
+                  id => id !== this.props.userInfo.id,
+                ) ||
+                this.group.owner !== this.props.userInfo.id ||
                 v === this.props.userInfo.id
               }
               data={selectorData}

@@ -14,6 +14,7 @@ import {
   TextInput,
   LogBox,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
@@ -46,7 +47,6 @@ import GroupInfo from './components/GroupInfo';
 import Friends from './components/Friends';
 import Blocked from './components/Blocked';
 import Search from './components/Search';
-import {ScrollView} from 'react-native-gesture-handler';
 
 // disable warning
 LogBox.ignoreAllLogs();
