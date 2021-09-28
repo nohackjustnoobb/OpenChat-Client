@@ -6,6 +6,7 @@ import React from 'react';
 import {Text, View, TouchableOpacity, FlatList} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faImage, faFile} from '@fortawesome/free-solid-svg-icons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import {Avatar} from '../App';
 
@@ -181,8 +182,26 @@ class Home extends React.Component {
                   </Text>
                   <View style={{flexDirection: 'row', alignItems: 'center'}}>
                     {messageOwnerView}
-                    {item.lastMessage?.additionImage ||
-                    item.lastMessage?.additionFile ? (
+                    {item.lastMessage.deleted ? (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          opacity: 0.8,
+                        }}>
+                        <Icon name="cancel" size={12} color="#8A90D5" />
+                        <Text
+                          style={{
+                            marginLeft: 3,
+                            fontSize: 12,
+                            color: '#8A90D5',
+                            fontWeight: '300',
+                          }}>
+                          Deleted Message
+                        </Text>
+                      </View>
+                    ) : item.lastMessage?.additionImage ||
+                      item.lastMessage?.additionFile ? (
                       <React.Fragment>
                         <FontAwesomeIcon
                           icon={

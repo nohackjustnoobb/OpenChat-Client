@@ -19,8 +19,6 @@ import {
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faChevronLeft,
-  faPlus,
-  faPaperPlane,
   faCamera,
   faImage,
   faThumbtack,
@@ -48,6 +46,7 @@ import {
 } from 'react-native-popup-menu';
 import FastImage from 'react-native-fast-image';
 import Clipboard from '@react-native-clipboard/clipboard';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import {Avatar} from '../App';
 
@@ -402,7 +401,7 @@ class Chat extends React.Component {
                           value={this.state.imageContent}
                         />
                         <TouchableOpacity
-                          style={{marginLeft: 10, transform: [{translateY: 3}]}}
+                          style={{marginLeft: 10, transform: [{translateY: 5}]}}
                           onPress={() => {
                             var imageContent = this.state.imageContent;
                             var image = this.state.imagePreview;
@@ -417,11 +416,7 @@ class Chat extends React.Component {
                               image,
                             );
                           }}>
-                          <FontAwesomeIcon
-                            icon={faPaperPlane}
-                            size={20}
-                            color="#6873F2"
-                          />
+                          <Icon name={'send'} size={22} color="#6873F2" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -571,6 +566,7 @@ class Chat extends React.Component {
                               },
                             }}>
                             <MenuTrigger
+                              disabled={item.deleted}
                               triggerOnLongPress
                               customStyles={{
                                 TriggerTouchableComponent:
@@ -600,32 +596,65 @@ class Chat extends React.Component {
                                       displayUser || displayDate ? 70 : 15,
                                     paddingBottom: 2,
                                   }}>
-                                  {item.additionImage ? (
-                                    <AdditionImage />
-                                  ) : (
-                                    <View />
-                                  )}
-                                  {item.additionFile ? (
-                                    <View>
-                                      <Text style={{color: 'red'}}>
-                                        I am File
+                                  {item.deleted ? (
+                                    <View
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        opacity: 0.5,
+                                      }}>
+                                      <Icon
+                                        name="cancel"
+                                        size={16}
+                                        color={
+                                          item.owner === this.props.userInfo.id
+                                            ? '#ffffff'
+                                            : '#000000'
+                                        }
+                                      />
+                                      <Text
+                                        style={{
+                                          color:
+                                            item.owner ===
+                                            this.props.userInfo.id
+                                              ? '#ffffff'
+                                              : '#000000',
+                                          marginLeft: 5,
+                                        }}>
+                                        Deleted Message
                                       </Text>
                                     </View>
                                   ) : (
-                                    <View />
-                                  )}
-                                  {item.content ? (
-                                    <Text
-                                      style={{
-                                        color:
-                                          item.owner === this.props.userInfo.id
-                                            ? '#ffffff'
-                                            : '#000000',
-                                      }}>
-                                      {item.content}
-                                    </Text>
-                                  ) : (
-                                    <View />
+                                    <>
+                                      {item.additionImage ? (
+                                        <AdditionImage />
+                                      ) : (
+                                        <></>
+                                      )}
+                                      {item.additionFile ? (
+                                        <View>
+                                          <Text style={{color: 'red'}}>
+                                            I am File
+                                          </Text>
+                                        </View>
+                                      ) : (
+                                        <></>
+                                      )}
+                                      {item.content ? (
+                                        <Text
+                                          style={{
+                                            color:
+                                              item.owner ===
+                                              this.props.userInfo.id
+                                                ? '#ffffff'
+                                                : '#000000',
+                                          }}>
+                                          {item.content}
+                                        </Text>
+                                      ) : (
+                                        <></>
+                                      )}
+                                    </>
                                   )}
                                   <Text
                                     style={{
@@ -706,7 +735,13 @@ class Chat extends React.Component {
                                   }
                                 />
                               </MenuOption>
-                              <MenuOption>
+                              <MenuOption
+                                onSelect={() =>
+                                  this.props.deleteMessageByID(
+                                    this.group.id,
+                                    item.id,
+                                  )
+                                }>
                                 <MenuItem
                                   title="Delete"
                                   icon={faTrash}
@@ -744,9 +779,10 @@ class Chat extends React.Component {
                     justifyContent: 'flex-end',
                     paddingBottom: insets.bottom + 30,
                   }}
+                  style={{transform: [{scale: 1.4}]}}
                   cancelTextStyle={{color: '#ff0000'}}
                   onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
-                  <FontAwesomeIcon icon={faPlus} size={25} color="#6873F2" />
+                  <Icon name={'plus'} size={26} color="#6873F2" />
                 </ModalSelector>
                 <TextInput
                   style={{
@@ -774,11 +810,7 @@ class Chat extends React.Component {
                     this.props.sendMessage(this.group.id, this.state.content);
                     this.setState({content: ''});
                   }}>
-                  <FontAwesomeIcon
-                    icon={faPaperPlane}
-                    size={25}
-                    color="#6873F2"
-                  />
+                  <Icon name={'send'} size={26} color="#6873F2" />
                 </TouchableOpacity>
               </View>
             </KeyboardAvoidingView>

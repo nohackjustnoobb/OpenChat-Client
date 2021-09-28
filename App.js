@@ -288,17 +288,28 @@ class App extends React.Component {
     }
 
     function messageHandler(message) {
-      var [group, message] = Object.entries(message)[0];
-      if (state.message[group]) {
-        var groupMessage = state.message[group];
+      var [groupID, message] = Object.entries(message)[0];
+      var group = state.group;
+      if (!message.deleted || group[groupID].lastMessage.id === message.id) {
+        group[groupID].lastMessage = message;
+        group[groupID].unReadMessage++;
+      }
+
+      if (state.message[groupID]) {
+        var groupMessage = state.message[groupID];
+        var messageIndex = groupMessage.findIndex(v => v.id === message.id);
+        if (messageIndex !== -1) {
+          groupMessage.splice(messageIndex, 1);
+        }
         groupMessage.push(message);
+
         var addMessage = {};
-        addMessage[group] = groupMessage;
-        setState({message: {...state.message, ...addMessage}});
+        addMessage[groupID] = groupMessage;
+        setState({message: {...state.message, ...addMessage}, group: group});
       } else {
         var groupMessage = {};
-        groupMessage[group] = [message];
-        setState({message: {...state.message, ...groupMessage}});
+        groupMessage[groupID] = [message];
+        setState({message: {...state.message, ...groupMessage}, group: group});
       }
     }
 
@@ -757,6 +768,23 @@ class App extends React.Component {
     }
   }
 
+  async deleteMessageByID(groupID, id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[groupID].isDM ? 'dm' : 'group'
+        }/${groupID}/messages/${id}/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'DELETE',
+        },
+      );
+      if (!response.ok) throw 'Fail To Delete Message';
+    } catch (e) {
+      Alert.alert('Fail To Delete Message');
+    }
+  }
+
   render() {
     return (
       <MenuProvider>
@@ -848,6 +876,7 @@ class App extends React.Component {
                     getUserByID={this.getUserByID.bind(this)}
                     sendMessage={this.sendMessage.bind(this)}
                     setReadByID={this.setReadByID.bind(this)}
+                    deleteMessageByID={this.deleteMessageByID.bind(this)}
                     serverUrl={this.state.serverUrl}
                     group={this.state.group}
                     user={this.state.user}
