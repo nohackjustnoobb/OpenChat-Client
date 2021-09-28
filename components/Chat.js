@@ -135,7 +135,7 @@ class Chat extends React.Component {
       refresh: false,
     };
 
-    this.newMessage = true;
+    this.lastMessage = false;
   }
 
   componentDidMount() {
@@ -192,8 +192,8 @@ class Chat extends React.Component {
 
   async getGroupMessage() {
     this.setState({refresh: true});
-    if (this.newMessage) {
-      this.newMessage = await this.props.getGroupMessageByID(this.group.id);
+    if (!this.lastMessage && !this.state.refresh) {
+      this.lastMessage = await this.props.getGroupMessageByID(this.group.id);
     }
     this.setState({refresh: false});
     return;
@@ -441,7 +441,6 @@ class Chat extends React.Component {
                 inverted
                 ListFooterComponent={
                   <ActivityIndicator
-                    size="large"
                     style={{
                       display: this.state.refresh ? 'flex' : 'none',
                       margin: 20,

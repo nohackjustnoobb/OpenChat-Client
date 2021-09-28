@@ -399,7 +399,7 @@ class App extends React.Component {
       if (jsonResult.length !== 0) {
         this.setState({message: message, group: group});
       }
-      return jsonResult.length !== 0;
+      return jsonResult.length === 0;
     } catch (e) {
       Alert.alert('Failed To Get Messages');
     }
