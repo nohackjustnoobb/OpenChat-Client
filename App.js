@@ -475,6 +475,11 @@ class App extends React.Component {
         {headers: new Headers({Authorization: `token ${this.state.token}`})},
       );
       if (!response.ok) throw 'Failed To Get Messages From Server';
+
+      var jsonResult = await response.json();
+      jsonResult.forEach(v =>
+        this.WSHandler(JSON.stringify({data: {message: {id: v}}})),
+      );
     } catch (e) {
       Alert.alert('Failed To Get Messages');
     }

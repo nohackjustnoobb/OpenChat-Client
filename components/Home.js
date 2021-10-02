@@ -187,7 +187,7 @@ class Home extends React.Component {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          opacity: 0.8,
+                          opacity: 0.9,
                         }}>
                         <Icon name="cancel" size={12} color="#8A90D5" />
                         <Text

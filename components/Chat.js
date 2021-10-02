@@ -132,6 +132,7 @@ class Chat extends React.Component {
       imageSelector: false,
       confirm: false,
       refresh: false,
+      reply: null,
     };
 
     this.lastMessage = false;
@@ -267,6 +268,10 @@ class Chat extends React.Component {
       },
     ];
 
+    var replyMessage = this.props.message[this.group.id]?.filter(
+      v => v.id === this.state.reply,
+    )[0];
+
     return (
       <SafeAreaView
         style={{flex: 1, backgroundColor: '#ffffff'}}
@@ -314,6 +319,7 @@ class Chat extends React.Component {
                                 this.setState({
                                   imageView: '',
                                   imagePreview: null,
+                                  reply: null,
                                 })
                               }>
                               <Text
@@ -392,7 +398,7 @@ class Chat extends React.Component {
                             height: 30,
                             backgroundColor: '#eeeeee',
                             borderRadius: 10,
-                            paddingLeft: 10,
+                            paddingHorizontal: 10,
                             marginTop: 10,
                           }}
                           placeholder="Message With Image"
@@ -405,15 +411,18 @@ class Chat extends React.Component {
                           onPress={() => {
                             var imageContent = this.state.imageContent;
                             var image = this.state.imagePreview;
+                            var reply = this.state.reply;
                             this.setState({
                               imageContent: '',
                               imagePreview: null,
                               confirm: false,
+                              reply: null,
                             });
                             this.props.sendMessage(
                               this.group.id,
                               imageContent,
                               image,
+                              reply,
                             );
                           }}>
                           <Icon name={'send'} size={22} color="#6873F2" />
@@ -484,9 +493,9 @@ class Chat extends React.Component {
                           marginBottom: 3,
                           overflow: 'hidden',
                           borderRadius: 3,
-                          width: Dimensions.get('window').width - 75,
+                          width: Dimensions.get('window').width - 80,
                           height:
-                            ((Dimensions.get('window').width - 75) * 9) / 16,
+                            ((Dimensions.get('window').width - 80) * 9) / 16,
                         }}
                       />
                     </TouchableWithoutFeedback>
@@ -592,16 +601,16 @@ class Chat extends React.Component {
                                         : '#ffffff',
                                     marginLeft:
                                       displayUser || displayDate ? 0 : 55,
-                                    marginRight:
-                                      displayUser || displayDate ? 70 : 15,
                                     paddingBottom: 2,
+                                    maxWidth:
+                                      Dimensions.get('window').width - 70,
                                   }}>
                                   {item.deleted ? (
                                     <View
                                       style={{
                                         flexDirection: 'row',
                                         alignItems: 'center',
-                                        opacity: 0.5,
+                                        opacity: 0.6,
                                       }}>
                                       <Icon
                                         name="cancel"
@@ -626,34 +635,148 @@ class Chat extends React.Component {
                                     </View>
                                   ) : (
                                     <>
+                                      <View
+                                        style={{
+                                          display: item.replyTo
+                                            ? 'flex'
+                                            : 'none',
+                                          flexDirection: 'row',
+                                          marginBottom: 5,
+                                          backgroundColor:
+                                            item.owner !==
+                                            this.props.userInfo.id
+                                              ? '#00000010'
+                                              : '#00000025',
+                                          borderRadius: 5,
+                                          overflow: 'hidden',
+                                        }}>
+                                        <View
+                                          style={{
+                                            backgroundColor:
+                                              item.owner !==
+                                              this.props.userInfo.id
+                                                ? '#6873F2'
+                                                : '#ffffff',
+                                            width: 5,
+                                          }}
+                                        />
+                                        <View
+                                          style={{
+                                            flexGrow: 1,
+                                            flexDirection: 'row',
+                                            justifyContent: 'space-between',
+                                          }}>
+                                          <View
+                                            style={{
+                                              marginHorizontal: 10,
+                                              marginVertical: 7,
+                                            }}>
+                                            <Text
+                                              style={{
+                                                color:
+                                                  item.owner !==
+                                                  this.props.userInfo.id
+                                                    ? '#6873F2'
+                                                    : '#ffffff',
+                                                fontWeight: '500',
+                                              }}>
+                                              {
+                                                this.props.user[
+                                                  item.replyTo?.owner
+                                                ]?.username
+                                              }
+                                            </Text>
+                                            <View
+                                              style={{
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                              }}>
+                                              <FontAwesomeIcon
+                                                icon={faImage}
+                                                size={15}
+                                                style={{
+                                                  marginRight: 5,
+                                                  display:
+                                                    !item.replyTo?.content &&
+                                                    item.replyTo?.additionImage
+                                                      ? 'flex'
+                                                      : 'none',
+                                                }}
+                                                color={
+                                                  item.owner !==
+                                                  this.props.userInfo.id
+                                                    ? '#000000'
+                                                    : '#ffffff'
+                                                }
+                                              />
+                                              <Text
+                                                style={{
+                                                  color:
+                                                    item.owner !==
+                                                    this.props.userInfo.id
+                                                      ? '#000000'
+                                                      : '#ffffff',
+                                                  maxWidth:
+                                                    Dimensions.get('window')
+                                                      .width - 154,
+                                                }}>
+                                                {!item.replyTo?.content &&
+                                                item.replyTo?.additionImage
+                                                  ? 'Image'
+                                                  : item.replyTo?.content}
+                                              </Text>
+                                            </View>
+                                          </View>
+                                          <FastImage
+                                            style={{
+                                              width: 35,
+                                              height: 35,
+                                              borderRadius: 5,
+                                              alignSelf: 'center',
+                                              display: item.replyTo
+                                                ?.additionImage
+                                                ? 'flex'
+                                                : 'none',
+                                              marginHorizontal: 5,
+                                            }}
+                                            source={{
+                                              uri:
+                                                this.props.serverUrl?.slice(
+                                                  0,
+                                                  -1,
+                                                ) + item.replyTo?.additionImage,
+                                            }}
+                                          />
+                                        </View>
+                                      </View>
+
                                       {item.additionImage ? (
                                         <AdditionImage />
                                       ) : (
                                         <></>
                                       )}
-                                      {item.additionFile ? (
-                                        <View>
-                                          <Text style={{color: 'red'}}>
-                                            I am File
-                                          </Text>
-                                        </View>
-                                      ) : (
-                                        <></>
-                                      )}
-                                      {item.content ? (
-                                        <Text
-                                          style={{
-                                            color:
-                                              item.owner ===
-                                              this.props.userInfo.id
-                                                ? '#ffffff'
-                                                : '#000000',
-                                          }}>
-                                          {item.content}
-                                        </Text>
-                                      ) : (
-                                        <></>
-                                      )}
+                                      <View
+                                        style={{
+                                          display: item.additionFile
+                                            ? 'flex'
+                                            : 'none',
+                                        }}>
+                                        <Text style={{color: 'red'}}>File</Text>
+                                      </View>
+
+                                      <Text
+                                        style={{
+                                          display: item.content
+                                            ? 'flex'
+                                            : 'none',
+                                          color:
+                                            item.owner ===
+                                            this.props.userInfo.id
+                                              ? '#ffffff'
+                                              : '#000000',
+                                        }}>
+                                        {item.content}
+                                      </Text>
                                     </>
                                   )}
                                   <Text
@@ -711,7 +834,10 @@ class Chat extends React.Component {
                                   }
                                 />
                               </MenuOption>
-                              <MenuOption>
+                              <MenuOption
+                                onSelect={() =>
+                                  this.setState({reply: item.id})
+                                }>
                                 <MenuItem title="Reply" icon={faReply} />
                               </MenuOption>
                               <MenuOption
@@ -763,55 +889,134 @@ class Chat extends React.Component {
               <View
                 style={{
                   backgroundColor: '#ffffff',
-                  height: 50,
+                  minHeight: 50,
                   width: '100%',
                   borderColor: '#DDDDDD',
                   borderTopWidth: 0.5,
-                  flexDirection: 'row',
-                  justifyContent: 'space-around',
-                  alignItems: 'center',
                 }}>
-                <ModalSelector
-                  data={additionselectorData}
-                  animationType={'fade'}
-                  backdropPressToClose={true}
-                  overlayStyle={{
-                    justifyContent: 'flex-end',
-                    paddingBottom: insets.bottom + 30,
-                  }}
-                  style={{transform: [{scale: 1.4}]}}
-                  cancelTextStyle={{color: '#ff0000'}}
-                  onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
-                  <Icon name={'plus'} size={26} color="#6873F2" />
-                </ModalSelector>
-                <TextInput
+                <View
                   style={{
-                    width: Dimensions.get('window').width * 0.7,
-                    minHeight: 35,
-                    backgroundColor: '#eeeeee',
-                    borderRadius: 10,
-                    padding: 10,
-                  }}
-                  placeholder="New Message"
-                  placeholderTextColor="#aaaaaa"
-                  onChangeText={v => this.setState({content: v})}
-                  value={this.state.content}
-                  onFocus={() =>
-                    this.messagesFlatList.scrollToIndex({index: 0})
-                  }
-                  returnKeyType="send"
-                  onSubmitEditing={() => {
-                    this.props.sendMessage(this.group.id, this.state.content);
-                    this.setState({content: ''});
-                  }}
-                />
-                <TouchableOpacity
-                  onPress={() => {
-                    this.props.sendMessage(this.group.id, this.state.content);
-                    this.setState({content: ''});
+                    display: this.state.reply ? 'flex' : 'none',
+                    flexDirection: 'row',
+                    marginBottom: 5,
+                    justifyContent: 'space-between',
                   }}>
-                  <Icon name={'send'} size={26} color="#6873F2" />
-                </TouchableOpacity>
+                  <View style={{flexDirection: 'row', flex: 1}}>
+                    <View
+                      style={{
+                        backgroundColor: '#6873F2',
+                        width: 5,
+                      }}
+                    />
+                    <View style={{marginHorizontal: 10, marginVertical: 7}}>
+                      <Text style={{color: '#6873F2', fontWeight: '500'}}>
+                        {this.props.user[replyMessage?.owner]?.username}
+                      </Text>
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <FontAwesomeIcon
+                          icon={faImage}
+                          size={15}
+                          style={{
+                            marginRight: 5,
+                            display:
+                              !replyMessage?.content &&
+                              replyMessage?.additionImage
+                                ? 'flex'
+                                : 'none',
+                          }}
+                        />
+                        <Text numberOfLines={1}>
+                          {!replyMessage?.content && replyMessage?.additionImage
+                            ? 'Image'
+                            : replyMessage?.content}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <FastImage
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 5,
+                      alignSelf: 'center',
+                      display: replyMessage?.additionImage ? 'flex' : 'none',
+                    }}
+                    source={{
+                      uri:
+                        this.props.serverUrl?.slice(0, -1) +
+                        replyMessage?.additionImage,
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => this.setState({reply: null})}
+                    style={{alignSelf: 'center', marginHorizontal: 10}}>
+                    <Icon
+                      name={'close-circle-outline'}
+                      size={22}
+                      color="#6873F2"
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-around',
+                    alignItems: 'center',
+                    flex: this.state.reply ? 0 : 1,
+                  }}>
+                  <ModalSelector
+                    data={additionselectorData}
+                    animationType={'fade'}
+                    backdropPressToClose={true}
+                    overlayStyle={{
+                      justifyContent: 'flex-end',
+                      paddingBottom: insets.bottom + 30,
+                    }}
+                    style={{transform: [{scale: 1.4}]}}
+                    cancelTextStyle={{color: '#ff0000'}}
+                    onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
+                    <Icon name={'plus'} size={26} color="#6873F2" />
+                  </ModalSelector>
+                  <TextInput
+                    style={{
+                      width: Dimensions.get('window').width * 0.7,
+                      minHeight: 35,
+                      backgroundColor: '#eeeeee',
+                      borderRadius: 10,
+                      paddingHorizontal: 10,
+                    }}
+                    placeholder="New Message"
+                    placeholderTextColor="#aaaaaa"
+                    onChangeText={v => this.setState({content: v})}
+                    value={this.state.content}
+                    onFocus={() =>
+                      this.messagesFlatList.scrollToIndex({index: 0})
+                    }
+                    returnKeyType="send"
+                    onSubmitEditing={() => {
+                      this.props.sendMessage(
+                        this.group.id,
+                        this.state.content,
+                        null,
+                        this.state.reply,
+                      );
+                      this.setState({content: '', reply: null});
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => {
+                      this.props.sendMessage(
+                        this.group.id,
+                        this.state.content,
+                        null,
+                        this.state.reply,
+                      );
+                      this.setState({content: '', reply: null});
+                    }}>
+                    <Icon name={'send'} size={26} color="#6873F2" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </KeyboardAvoidingView>
           )}
