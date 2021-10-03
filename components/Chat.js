@@ -590,6 +590,7 @@ class Chat extends React.Component {
                                   },
                                   shadowOpacity: 0.1,
                                   shadowRadius: 1,
+                                  flexDirection: 'row',
                                 }}>
                                 <View
                                   style={{
@@ -662,7 +663,6 @@ class Chat extends React.Component {
                                         />
                                         <View
                                           style={{
-                                            flexGrow: 1,
                                             flexDirection: 'row',
                                             justifyContent: 'space-between',
                                           }}>
@@ -797,6 +797,7 @@ class Chat extends React.Component {
                                     })}
                                   </Text>
                                 </View>
+                                <View style={{flex: 1}} />
                               </DropShadow>
                             </MenuTrigger>
                             <MenuOptions
@@ -852,7 +853,16 @@ class Chat extends React.Component {
                                   }
                                 />
                               </MenuOption>
-                              <MenuOption>
+                              <MenuOption
+                                onSelect={() =>
+                                  this.props.navigation.navigate(
+                                    'MessageInfo',
+                                    {
+                                      group: this.group.id,
+                                      message: item.id,
+                                    },
+                                  )
+                                }>
                                 <MenuItem
                                   title="Info"
                                   icon={faInfo}

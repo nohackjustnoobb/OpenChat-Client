@@ -47,6 +47,7 @@ import GroupInfo from './components/GroupInfo';
 import Friends from './components/Friends';
 import Blocked from './components/Blocked';
 import Search from './components/Search';
+import MessageInfo from './components/MessageInfo';
 
 // disable warning
 LogBox.ignoreAllLogs();
@@ -790,6 +791,25 @@ class App extends React.Component {
     }
   }
 
+  async getMessageInfoByID(groupID, id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[groupID].isDM ? 'dm' : 'group'
+        }/${groupID}/messages/${id}/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'GET',
+        },
+      );
+      if (!response.ok) throw 'Fail To Delete Message';
+
+      return await response.json();
+    } catch (e) {
+      Alert.alert('Fail To Delete Message');
+    }
+  }
+
   render() {
     return (
       <MenuProvider>
@@ -1178,6 +1198,21 @@ class App extends React.Component {
                     sendFriendRequest={this.sendFriendRequest.bind(this)}
                     replyFriendRequest={this.replyFriendRequest.bind(this)}
                     searchUser={this.searchUser.bind(this)}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="MessageInfo"
+                options={{headerTitle: 'Message Info'}}>
+                {props => (
+                  <MessageInfo
+                    group={this.state.group}
+                    userInfo={this.state.userInfo}
+                    user={this.state.user}
+                    serverUrl={this.state.serverUrl}
+                    deleteMessageByID={this.deleteMessageByID.bind(this)}
+                    getMessageInfoByID={this.getMessageInfoByID.bind(this)}
                     {...props}
                   />
                 )}
