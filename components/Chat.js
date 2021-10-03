@@ -100,8 +100,9 @@ function MenuItem(props) {
           }}>
           {props.title}
         </Text>
-        <FontAwesomeIcon
-          icon={props.icon}
+        <Icon
+          size={21}
+          name={props.icon}
           color={props.color === undefined ? '#6873F2' : props.color}
         />
       </View>
@@ -165,6 +166,17 @@ class Chat extends React.Component {
             })
           }
         />
+      ),
+      headerRight: () => (
+        <TouchableOpacity
+          style={{marginRight: 10}}
+          onPress={() =>
+            this.props.navigation.navigate('PinnedMessages', {
+              group: this.group.id,
+            })
+          }>
+          <FontAwesomeIcon icon={faThumbtack} color="#6873F2" size={21} />
+        </TouchableOpacity>
       ),
     });
 
@@ -570,8 +582,6 @@ class Chat extends React.Component {
                               preferredPlacement: 'right',
                               anchorStyle: {
                                 zIndex: 2,
-                                marginLeft:
-                                  displayDate || displayUser ? -70 : undefined,
                               },
                             }}>
                             <MenuTrigger
@@ -665,6 +675,7 @@ class Chat extends React.Component {
                                           style={{
                                             flexDirection: 'row',
                                             justifyContent: 'space-between',
+                                            flexGrow: 1,
                                           }}>
                                           <View
                                             style={{
@@ -797,7 +808,6 @@ class Chat extends React.Component {
                                     })}
                                   </Text>
                                 </View>
-                                <View style={{flex: 1}} />
                               </DropShadow>
                             </MenuTrigger>
                             <MenuOptions
@@ -819,10 +829,20 @@ class Chat extends React.Component {
                                 optionWrapper: {padding: 0},
                                 OptionTouchableComponent: TouchableOpacity,
                               }}>
-                              <MenuOption>
+                              <MenuOption
+                                onSelect={() =>
+                                  this.props.togglePinByID(
+                                    this.group.id,
+                                    item.id,
+                                  )
+                                }>
                                 <MenuItem
-                                  title="Pin"
-                                  icon={faThumbtack}
+                                  title={item.pinned ? 'Unpin' : 'Pin'}
+                                  icon={
+                                    item.pinned
+                                      ? 'pin-off-outline'
+                                      : 'pin-outline'
+                                  }
                                   isDisable={
                                     !this.group.isDM &&
                                     Boolean(
@@ -839,7 +859,7 @@ class Chat extends React.Component {
                                 onSelect={() =>
                                   this.setState({reply: item.id})
                                 }>
-                                <MenuItem title="Reply" icon={faReply} />
+                                <MenuItem title="Reply" icon="reply-outline" />
                               </MenuOption>
                               <MenuOption
                                 onSelect={() =>
@@ -847,7 +867,7 @@ class Chat extends React.Component {
                                 }>
                                 <MenuItem
                                   title="Copy"
-                                  icon={faCopy}
+                                  icon="content-copy"
                                   underline={
                                     item.owner === this.props.userInfo.id
                                   }
@@ -865,7 +885,7 @@ class Chat extends React.Component {
                                 }>
                                 <MenuItem
                                   title="Info"
-                                  icon={faInfo}
+                                  icon="information-outline"
                                   isDisable={
                                     item.owner !== this.props.userInfo.id
                                   }
@@ -880,7 +900,7 @@ class Chat extends React.Component {
                                 }>
                                 <MenuItem
                                   title="Delete"
-                                  icon={faTrash}
+                                  icon="delete-outline"
                                   color="#ff6666"
                                   underline={false}
                                   isDisable={

@@ -147,6 +147,7 @@ class MessageInfo extends React.Component {
                 },
                 shadowOpacity: 0.1,
                 shadowRadius: 1,
+                flexDirection: 'row',
               }}>
               <View
                 style={{
@@ -451,4 +452,5 @@ class MessageInfo extends React.Component {
   }
 }
 
+export {MessageInfoHeaderLeft};
 export default MessageInfo;

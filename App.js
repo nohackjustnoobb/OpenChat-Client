@@ -48,6 +48,7 @@ import Friends from './components/Friends';
 import Blocked from './components/Blocked';
 import Search from './components/Search';
 import MessageInfo from './components/MessageInfo';
+import PinnedMessages from './components/PinnedMessages';
 
 // disable warning
 LogBox.ignoreAllLogs();
@@ -288,12 +289,14 @@ class App extends React.Component {
       setState({user: user});
     }
 
-    function messageHandler(message) {
+    function messageHandler(message, pin = false) {
       var [groupID, message] = Object.entries(message)[0];
       var group = state.group;
       if (!message.deleted || group[groupID].lastMessage.id === message.id) {
         group[groupID].lastMessage = message;
-        group[groupID].unReadMessage++;
+        if (!pin) {
+          group[groupID].unReadMessage++;
+        }
       }
 
       if (state.message[groupID]) {
@@ -307,7 +310,7 @@ class App extends React.Component {
         var addMessage = {};
         addMessage[groupID] = groupMessage;
         setState({message: {...state.message, ...addMessage}, group: group});
-      } else {
+      } else if (!pin) {
         var groupMessage = {};
         groupMessage[groupID] = [message];
         setState({message: {...state.message, ...groupMessage}, group: group});
@@ -335,6 +338,7 @@ class App extends React.Component {
       message: messageHandler,
       groupDeleted: groupDeletedHandler,
       relationship: setState,
+      pinMessage: m => messageHandler(m, true),
     };
 
     // check event and use its handler
@@ -810,6 +814,45 @@ class App extends React.Component {
     }
   }
 
+  async getPinnedMessageByID(groupID) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[groupID].isDM ? 'dm' : 'group'
+        }/${groupID}/messages/pinned/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: 'GET',
+        },
+      );
+      if (!response.ok) throw 'Fail To Get Pinned Message';
+
+      return await response.json();
+    } catch (e) {
+      Alert.alert('Fail To Get Pinned Message');
+    }
+  }
+
+  async togglePinByID(groupID, id) {
+    try {
+      var response = await fetch(
+        `${this.state.serverUrl}${
+          this.state.group[groupID].isDM ? 'dm' : 'group'
+        }/${groupID}/messages/${id}/pin/`,
+        {
+          headers: new Headers({Authorization: `token ${this.state.token}`}),
+          method: this.state.message[groupID].find(v => v.id === id).pinned
+            ? 'DELETE'
+            : 'POST',
+        },
+      );
+
+      if (!response.ok) throw 'Fail To Pin or Unpin Message';
+    } catch (e) {
+      Alert.alert('Fail To Pin or Unpin Message');
+    }
+  }
+
   render() {
     return (
       <MenuProvider>
@@ -902,6 +945,7 @@ class App extends React.Component {
                     sendMessage={this.sendMessage.bind(this)}
                     setReadByID={this.setReadByID.bind(this)}
                     deleteMessageByID={this.deleteMessageByID.bind(this)}
+                    togglePinByID={this.togglePinByID.bind(this)}
                     serverUrl={this.state.serverUrl}
                     group={this.state.group}
                     user={this.state.user}
@@ -1213,6 +1257,22 @@ class App extends React.Component {
                     serverUrl={this.state.serverUrl}
                     deleteMessageByID={this.deleteMessageByID.bind(this)}
                     getMessageInfoByID={this.getMessageInfoByID.bind(this)}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="PinnedMessages"
+                options={{headerTitle: 'Pinned Messages'}}>
+                {props => (
+                  <PinnedMessages
+                    getPinnedMessageByID={this.getPinnedMessageByID.bind(this)}
+                    getUserByID={this.getUserByID.bind(this)}
+                    togglePinByID={this.togglePinByID.bind(this)}
+                    group={this.state.group}
+                    userInfo={this.state.userInfo}
+                    user={this.state.user}
+                    serverUrl={this.state.serverUrl}
                     {...props}
                   />
                 )}
