@@ -22,10 +22,6 @@ import {
   faCamera,
   faImage,
   faThumbtack,
-  faReply,
-  faCopy,
-  faInfo,
-  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   SafeAreaView,
@@ -48,7 +44,7 @@ import FastImage from 'react-native-fast-image';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import {Avatar} from '../App';
+import {Avatar, datetimeToString} from '../App';
 
 function ChatHeaderLeft(props) {
   return (
@@ -74,9 +70,23 @@ function ChatHeaderLeft(props) {
           }
           isGroup={!props.isDM}
         />
-        <View>
+        <View style={{maxWidth: '80%'}}>
           <Text style={{fontWeight: '600', fontSize: 13}}>
             {props.groupName}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: '#888888',
+              width: '100%',
+              fontSize: 11,
+              display: !props.last_login ? 'none' : 'flex',
+            }}>
+            {props.isDM
+              ? props.isOnline
+                ? 'Online'
+                : `last seen at ${datetimeToString(props.last_login)}`
+              : props.groupMembers}
           </Text>
         </View>
       </TouchableOpacity>
@@ -141,44 +151,16 @@ class Chat extends React.Component {
 
   componentDidMount() {
     this.group = this.props.group[this.props.route.params.group];
-    var groupName = this.group.groupName;
-    var avatar = this.group.avatar;
+    this.groupName = this.group.groupName;
+    this.avatar = this.group.avatar;
 
     if (this.group.isDM) {
-      var userID = this.group.members.filter(
+      this.userID = this.group.members.filter(
         v => v !== this.props.userInfo.id,
       )[0];
-      groupName = this.props.user[userID].username;
-      avatar = this.props.user[userID].avatar;
+      this.groupName = this.props.user[this.userID].username;
+      this.avatar = this.props.user[this.userID].avatar;
     }
-
-    this.props.navigation.setOptions({
-      headerLeft: () => (
-        <ChatHeaderLeft
-          groupName={groupName}
-          avatar={avatar}
-          isDM={this.group.isDM}
-          serverUrl={this.props.serverUrl}
-          goBack={() => this.props.navigation.goBack()}
-          groupInfo={() =>
-            this.props.navigation.navigate('GroupInfo', {
-              group: this.group.id,
-            })
-          }
-        />
-      ),
-      headerRight: () => (
-        <TouchableOpacity
-          style={{marginRight: 10}}
-          onPress={() =>
-            this.props.navigation.navigate('PinnedMessages', {
-              group: this.group.id,
-            })
-          }>
-          <FontAwesomeIcon icon={faThumbtack} color="#6873F2" size={21} />
-        </TouchableOpacity>
-      ),
-    });
 
     if (
       !this.props.message[this.group.id] ||
@@ -195,11 +177,19 @@ class Chat extends React.Component {
       'keyboardWillHide',
       () => this.setState({keyboardHeight: 0}),
     );
+
+    if (this.userID) {
+      this.props.toggleTrackByID(this.userID, false);
+    }
   }
 
   componentWillUnmount() {
     this.keyboardDidShowSubscription.remove();
     this.keyboardDidHideSubscription.remove();
+
+    if (this.userID) {
+      this.props.toggleTrackByID(this.userID, true);
+    }
   }
 
   async getGroupMessage() {
@@ -226,6 +216,45 @@ class Chat extends React.Component {
   }
 
   render() {
+    // update headers
+    this.props.navigation.setOptions({
+      headerLeft: () => (
+        <ChatHeaderLeft
+          groupName={this.groupName}
+          avatar={this.avatar}
+          isDM={this.group.isDM}
+          serverUrl={this.props.serverUrl}
+          goBack={() => this.props.navigation.goBack()}
+          groupInfo={() =>
+            this.props.navigation.navigate('GroupInfo', {
+              group: this.group.id,
+            })
+          }
+          {...(this.userID
+            ? {
+                isOnline: this.props.user[this.userID]?.isOnline,
+                last_login: this.props.user[this.userID]?.last_login,
+              }
+            : {
+                groupMembers: this.group.members
+                  .reduce((p, c) => `${p}, ${this.props.user[c]?.username}`, '')
+                  .slice(2),
+              })}
+        />
+      ),
+      headerRight: () => (
+        <TouchableOpacity
+          style={{marginRight: 10}}
+          onPress={() =>
+            this.props.navigation.navigate('PinnedMessages', {
+              group: this.group.id,
+            })
+          }>
+          <FontAwesomeIcon icon={faThumbtack} color="#6873F2" size={21} />
+        </TouchableOpacity>
+      ),
+    });
+
     this.group = this.props.group[this.props.route.params.group];
     var messagesSort = this.props.message[this.group.id]?.sort(
       (a, b) => b.id - a.id,

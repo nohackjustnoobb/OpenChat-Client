@@ -15,6 +15,7 @@ import {
   LogBox,
   ActivityIndicator,
   ScrollView,
+  AppState,
 } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
@@ -187,6 +188,42 @@ function Avatar(props) {
   );
 }
 
+function datetimeToString(datetime) {
+  var datetimeString = '';
+  var datetime = new Date(datetime);
+  var now = new Date();
+  var diff = new Date(now.getTime() - datetime.getTime());
+  datetimeString = datetime.toLocaleDateString('en-GB');
+
+  if (
+    diff.getUTCFullYear() - 1970 === 0 &&
+    diff.getUTCMonth() === 0 &&
+    diff.getUTCDate() <= 7
+  ) {
+    var weekday = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    datetimeString = weekday[datetime.getDay()];
+    if (diff.getUTCDate() - 1 === 1) {
+      datetimeString = 'Yesterday';
+    } else if (diff.getDate() - 1 === 0) {
+      datetimeString = 'Today';
+    }
+  }
+
+  return `${datetimeString} ${datetime.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  })}`;
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -217,6 +254,20 @@ class App extends React.Component {
       groupName: '',
       groupAvatar: null,
     };
+  }
+
+  componentDidMount() {
+    this.appStateSubscription = AppState.addEventListener('change', change => {
+      if (change === 'active' && !this.state.wsConnected) {
+        this.connectWS();
+      } else if (change !== 'active' && this.state.wsConnected) {
+        this.ws.close();
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.appStateSubscription.remove();
   }
 
   // check if server working and also get info
@@ -323,6 +374,16 @@ class App extends React.Component {
       setState({group: group});
     }
 
+    function statusHandler(status) {
+      var [id, status] = Object.entries(status)[0];
+      var user = state.user;
+
+      user[id].isOnline = status.isOnline;
+      user[id].last_login = status.last_login;
+
+      setState({user: user});
+    }
+
     // decode
     var data = JSON.parse(e.data);
 
@@ -339,6 +400,7 @@ class App extends React.Component {
       groupDeleted: groupDeletedHandler,
       relationship: setState,
       pinMessage: m => messageHandler(m, true),
+      status: statusHandler,
     };
 
     // check event and use its handler
@@ -362,6 +424,9 @@ class App extends React.Component {
       this.ws.send(
         JSON.stringify({Authorization: `token ${this.state.token}`}),
       );
+      if (this.trackUser) {
+        this.toggleTrackByID(this.trackUser, false);
+      }
     };
 
     // handle reconnect or disconnect
@@ -853,6 +918,11 @@ class App extends React.Component {
     }
   }
 
+  async toggleTrackByID(id, discard) {
+    this.trackUser = !discard ? id : null;
+    this.ws.send(JSON.stringify({track: {id: id, discard: discard}}));
+  }
+
   render() {
     return (
       <MenuProvider>
@@ -946,6 +1016,7 @@ class App extends React.Component {
                     setReadByID={this.setReadByID.bind(this)}
                     deleteMessageByID={this.deleteMessageByID.bind(this)}
                     togglePinByID={this.togglePinByID.bind(this)}
+                    toggleTrackByID={this.toggleTrackByID.bind(this)}
                     serverUrl={this.state.serverUrl}
                     group={this.state.group}
                     user={this.state.user}
@@ -1285,5 +1356,5 @@ class App extends React.Component {
   }
 }
 
-export {BackHeaderLeft, Avatar};
+export {BackHeaderLeft, Avatar, datetimeToString};
 export default App;

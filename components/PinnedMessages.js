@@ -12,12 +12,7 @@ import {
   FlatList,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {
-  faChevronLeft,
-  faImage,
-  faThumbtack,
-  faCopy,
-} from '@fortawesome/free-solid-svg-icons';
+import {faChevronLeft, faImage} from '@fortawesome/free-solid-svg-icons';
 import DropShadow from 'react-native-drop-shadow';
 import {
   Menu,
