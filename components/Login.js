@@ -24,7 +24,7 @@ class Login extends React.Component {
     this.MMKV = new MMKVStorage.Loader().initialize();
 
     this.state = {
-      username: '',
+      email: '',
       password: '',
       setServerMenu: false,
       connected: Boolean(props.serverUrl),
@@ -37,7 +37,7 @@ class Login extends React.Component {
 
   componentDidUpdate() {
     if (this.state.connected && !this.props.serverUrl) {
-      this.setState({connected: false, username: '', password: ''});
+      this.setState({connected: false, email: '', password: ''});
     }
   }
 
@@ -48,9 +48,9 @@ class Login extends React.Component {
       return this.setState({setServerMenu: true});
     }
 
-    // check if password or username if empty
-    if (!this.state.password || !this.state.username) {
-      return Alert.alert('Please enter your username and password');
+    // check if password or email if empty
+    if (!this.state.password || !this.state.email) {
+      return Alert.alert('Please enter your email and password');
     }
 
     // get token from server
@@ -61,7 +61,7 @@ class Login extends React.Component {
           'Content-Type': 'application/json',
         }),
         body: JSON.stringify({
-          username: this.state.username,
+          email: this.state.email,
           password: this.state.password,
         }),
       });
@@ -76,7 +76,7 @@ class Login extends React.Component {
           this.props.navigation.replace('Home'),
         );
       } else {
-        Alert.alert('Username or Password is incorrect');
+        Alert.alert('Email or Password is incorrect');
         this.setState({password: ''});
       }
     } catch (e) {
@@ -154,12 +154,12 @@ class Login extends React.Component {
           </View>
           <Input
             containerStyle={styles.input}
-            label="Username"
-            placeholder="username"
-            value={this.state.username}
+            label="Email"
+            placeholder="email"
+            value={this.state.email}
             leftIcon={<Icon name="user" size={21} color="#6873F2" />}
-            autoCompleteType="username"
-            onChangeText={v => this.setState({username: v})}
+            autoCompleteType="email"
+            onChangeText={v => this.setState({email: v})}
             autoCorrect={false}
           />
 
@@ -173,6 +173,8 @@ class Login extends React.Component {
             label="Password"
             placeholder="password"
             autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={() => this.login()}
           />
           <View
             style={{
@@ -200,7 +202,12 @@ class Login extends React.Component {
                 borderRadius: 20,
                 margin: 10,
               }}
-              onPress={async () => this.setState({setServerMenu: true})}
+              onPress={async () => {
+                if (!this.props.serverInfo && this.props.serverUrl) {
+                  this.props.getServerInfo();
+                }
+                this.setState({setServerMenu: true});
+              }}
             />
           </View>
           <View style={{height: 85}} />

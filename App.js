@@ -279,9 +279,6 @@ class App extends React.Component {
       this.setState({serverInfo: jsonResult});
     } catch (e) {
       Alert.alert('Cannot connect to server');
-      this.MMKV.removeItem('token');
-      this.MMKV.removeItem('serverUrl');
-      this.setState({serverUrl: null, token: null});
     }
   }
 
@@ -963,7 +960,6 @@ class App extends React.Component {
                     user={this.state.user}
                     group={this.state.group}
                     message={this.state.message}
-                    disconnectServer={this.disconnectServer.bind(this)}
                     getServerInfo={this.getServerInfo.bind(this)}
                     connectWS={this.connectWS.bind(this)}
                     getUserByID={this.getUserByID.bind(this)}
