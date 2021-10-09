@@ -5,16 +5,18 @@
 import React from 'react';
 import {
   Alert,
-  StyleSheet,
   Text,
   View,
   KeyboardAvoidingView,
+  Dimensions,
 } from 'react-native';
 import MMKVStorage from 'react-native-mmkv-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Input, Button, Overlay} from 'react-native-elements';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import LinearGradient from 'react-native-linear-gradient';
+import {Input, Button} from 'react-native-elements';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faChevronLeft} from '@fortawesome/free-solid-svg-icons';
+import LottieView from 'lottie-react-native';
 
 // Login Page
 class Login extends React.Component {
@@ -26,8 +28,6 @@ class Login extends React.Component {
     this.state = {
       email: '',
       password: '',
-      setServerMenu: false,
-      connected: Boolean(props.serverUrl),
     };
 
     if (!props.serverInfo && props.serverUrl) {
@@ -35,19 +35,8 @@ class Login extends React.Component {
     }
   }
 
-  componentDidUpdate() {
-    if (this.state.connected && !this.props.serverUrl) {
-      this.setState({connected: false, email: '', password: ''});
-    }
-  }
-
   // handle login
   async login() {
-    // check if server connected
-    if (!this.props.serverUrl) {
-      return this.setState({setServerMenu: true});
-    }
-
     // check if password or email if empty
     if (!this.state.password || !this.state.email) {
       return Alert.alert('Please enter your email and password');
@@ -80,57 +69,38 @@ class Login extends React.Component {
         this.setState({password: ''});
       }
     } catch (e) {
-      Alert.alert('Unknown Error');
-    }
-  }
-
-  // connect to server
-  async connectToServer() {
-    try {
-      // add '/' at the end for url
-      if (!this.props.serverUrl.endsWith('/')) {
-        this.props.setState({serverUrl: this.props.serverUrl + '/'});
-      }
-
-      var response = await fetch(this.props.serverUrl);
-      if (response.ok) {
-        // save server url
-        this.MMKV.setString('serverUrl', this.props.serverUrl);
-        var jsonResult = await response.json();
-        Alert.alert('Server Connected');
-        this.setState({
-          connected: true,
-          setServerMenu: false,
-        });
-        this.props.setState({serverInfo: jsonResult});
-      } else {
-        throw 'Cannot connect to server';
-      }
-    } catch (e) {
-      this.props.setState({serverUrl: ''});
-      Alert.alert('Cannot connect to server');
+      Alert.alert('Server Error');
     }
   }
 
   render() {
-    const styles = StyleSheet.create({
-      title: {
-        fontSize: 31,
-        fontWeight: '600',
-        alignSelf: 'center',
-      },
-      input: {
-        width: 300,
-        padding: 5,
-      },
-    });
-
     return (
       <SafeAreaView
-        style={{flex: 1, backgroundColor: '#ffffff'}}
+        style={{flex: 1, backgroundColor: '#F9F9F9'}}
         edges={['right', 'top', 'left']}>
+        <Button
+          title="Back"
+          type="clear"
+          icon={
+            <FontAwesomeIcon icon={faChevronLeft} size={20} color="#6873F2" />
+          }
+          titleStyle={{color: '#6873F2', paddingLeft: 5}}
+          containerStyle={{alignSelf: 'flex-start'}}
+          onPress={() => this.props.navigation.goBack()}
+        />
+        <LottieView
+          style={{
+            transform: [
+              {translateY: Dimensions.get('window').height / 5.5},
+              {scale: 2},
+            ],
+          }}
+          source={require('../LottieAnimations/50949-waves.json')}
+          autoPlay
+          loop
+        />
         <KeyboardAvoidingView
-          behavior={this.state.setServerMenu ? '' : 'padding'}
+          behavior={'padding'}
           keyboardVerticalOffset={-100}
           style={{
             flex: 1,
@@ -138,7 +108,8 @@ class Login extends React.Component {
             alignSelf: 'center',
           }}>
           <View>
-            <Text style={styles.title}>
+            <Text
+              style={{fontSize: 31, fontWeight: '600', alignSelf: 'center'}}>
               <Text style={{color: '#6873F2'}}>Open</Text>Chat
             </Text>
             <View
@@ -153,18 +124,23 @@ class Login extends React.Component {
             />
           </View>
           <Input
-            containerStyle={styles.input}
+            containerStyle={{
+              width: 300,
+              padding: 5,
+            }}
             label="Email"
             placeholder="email"
             value={this.state.email}
-            leftIcon={<Icon name="user" size={21} color="#6873F2" />}
+            leftIcon={<Icon name="email" size={21} color="#6873F2" />}
             autoCompleteType="email"
             onChangeText={v => this.setState({email: v})}
             autoCorrect={false}
           />
-
           <Input
-            containerStyle={styles.input}
+            containerStyle={{
+              width: 300,
+              padding: 5,
+            }}
             autoCompleteType="password"
             onChangeText={v => this.setState({password: v})}
             leftIcon={<Icon name="lock" size={21} color="#6873F2" />}
@@ -176,172 +152,18 @@ class Login extends React.Component {
             returnKeyType="done"
             onSubmitEditing={() => this.login()}
           />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}>
-            <Button
-              title="Log In"
-              buttonStyle={{
-                marginTop: 10,
-                backgroundColor: '#6873F2',
-                width: 200,
-                alignSelf: 'center',
-              }}
-              onPress={() => this.login()}
-            />
-            <Button
-              title=""
-              icon={<Icon name="server" size={20} color="#ffffff" />}
-              titleStyle={{color: '#ffffff', paddingLeft: 6}}
-              buttonStyle={{
-                backgroundColor: '#6873F2',
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                margin: 10,
-              }}
-              onPress={async () => {
-                if (!this.props.serverInfo && this.props.serverUrl) {
-                  this.props.getServerInfo();
-                }
-                this.setState({setServerMenu: true});
-              }}
-            />
-          </View>
+          <Button
+            title="Log In"
+            buttonStyle={{
+              marginTop: 10,
+              backgroundColor: '#6873F2',
+              width: 250,
+              alignSelf: 'center',
+            }}
+            onPress={() => this.login()}
+          />
           <View style={{height: 85}} />
         </KeyboardAvoidingView>
-        <LinearGradient
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          colors={['#c9b9f9', '#6873F2']}
-          style={{
-            position: 'absolute',
-            height: 150,
-            width: 150,
-            borderRadius: 75,
-            zIndex: -1,
-            right: 120,
-            bottom: -50,
-          }}
-        />
-        <LinearGradient
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          colors={['#c9b9f9', '#6873F2']}
-          style={{
-            position: 'absolute',
-            height: 300,
-            width: 300,
-            borderRadius: 150,
-            zIndex: -1,
-            right: -130,
-            bottom: -80,
-          }}
-        />
-        <Overlay
-          isVisible={this.state.setServerMenu}
-          onBackdropPress={() => this.setState({setServerMenu: false})}>
-          {this.state.connected ? (
-            <View
-              style={{
-                alignItems: 'center',
-                padding: 10,
-                paddingHorizontal: 20,
-              }}>
-              <Text style={{fontSize: 21, fontWeight: '600', marginBottom: 10}}>
-                Connected Server Info
-              </Text>
-              <View>
-                <Text>
-                  Address:{' '}
-                  <Text style={{fontWeight: '700'}}>
-                    {this.props.serverUrl}
-                  </Text>
-                </Text>
-                <Text>
-                  Name:{' '}
-                  <Text style={{fontWeight: '700'}}>
-                    {this.props.serverInfo?.serverName}
-                  </Text>
-                </Text>
-                <Text>
-                  Type:{' '}
-                  <Text style={{fontWeight: '700'}}>
-                    {this.props.serverInfo?.serverType}
-                  </Text>
-                </Text>
-                <Text>
-                  Version:{' '}
-                  <Text style={{fontWeight: '700'}}>
-                    {this.props.serverInfo?.serverVersion}
-                  </Text>
-                </Text>
-              </View>
-
-              <View style={{flexDirection: 'row', marginTop: 20}}>
-                <Button
-                  title="Disconnect"
-                  buttonStyle={{
-                    backgroundColor: '#6873F2',
-                    width: 110,
-                    marginRight: 5,
-                  }}
-                  onPress={() => {
-                    this.MMKV.removeItem('serverUrl');
-                    this.props.setState({serverUrl: ''});
-                    this.setState({connected: false});
-                  }}
-                />
-                <Button
-                  title="Cancel"
-                  titleStyle={{color: '#6873F2'}}
-                  type="outline"
-                  buttonStyle={{
-                    width: 110,
-                    marginLeft: 5,
-                    borderColor: '#6873F2',
-                  }}
-                  onPress={() => this.setState({setServerMenu: false})}
-                />
-              </View>
-            </View>
-          ) : (
-            <React.Fragment>
-              <Input
-                containerStyle={styles.input}
-                onChangeText={v => this.props.setState({serverUrl: v})}
-                leftIcon={<Icon name="server" size={21} color="#6873F2" />}
-                value={this.props.serverUrl}
-                label="Server Address"
-                autoCorrect={false}
-              />
-              <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-                <Button
-                  title="Apply"
-                  buttonStyle={{
-                    backgroundColor: '#6873F2',
-                    width: 100,
-                    marginRight: 5,
-                  }}
-                  onPress={() => this.connectToServer()}
-                />
-                <Button
-                  title="Cancel"
-                  titleStyle={{color: '#6873F2'}}
-                  type="outline"
-                  buttonStyle={{
-                    width: 100,
-                    marginLeft: 5,
-                    borderColor: '#6873F2',
-                  }}
-                  onPress={() => this.setState({setServerMenu: false})}
-                />
-              </View>
-            </React.Fragment>
-          )}
-        </Overlay>
       </SafeAreaView>
     );
   }

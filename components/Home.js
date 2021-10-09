@@ -24,7 +24,7 @@ class Home extends React.Component {
   }
 
   componentDidUpdate() {
-    if (!this.props.token) this.props.navigation.replace('Login');
+    if (!this.props.token) this.props.navigation.replace('Start');
   }
 
   render() {

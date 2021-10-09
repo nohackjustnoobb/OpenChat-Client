@@ -50,6 +50,8 @@ import Blocked from './components/Blocked';
 import Search from './components/Search';
 import MessageInfo from './components/MessageInfo';
 import PinnedMessages from './components/PinnedMessages';
+import Start from './components/Start';
+import SignUp from './components/SignUp';
 
 // disable warning
 LogBox.ignoreAllLogs();
@@ -926,7 +928,7 @@ class App extends React.Component {
         <SafeAreaProvider>
           <NavigationContainer>
             <Stack.Navigator
-              initialRouteName={this.state.token ? 'Home' : 'Login'}
+              initialRouteName={this.state.token ? 'Home' : 'Start'}
               headerMode="screen">
               <Stack.Screen
                 name="Home"
@@ -963,20 +965,6 @@ class App extends React.Component {
                     getServerInfo={this.getServerInfo.bind(this)}
                     connectWS={this.connectWS.bind(this)}
                     getUserByID={this.getUserByID.bind(this)}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen
-                name="Login"
-                options={{headerShown: false, gestureEnabled: false}}>
-                {props => (
-                  <Login
-                    {...props}
-                    setState={this.setState.bind(this)}
-                    serverUrl={this.state.serverUrl}
-                    serverInfo={this.state.serverInfo}
-                    getServerInfo={this.getServerInfo.bind(this)}
-                    token={this.state.token}
                   />
                 )}
               </Stack.Screen>
@@ -1342,6 +1330,37 @@ class App extends React.Component {
                     serverUrl={this.state.serverUrl}
                     {...props}
                   />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="LogIn" options={{headerShown: false}}>
+                {props => (
+                  <Login
+                    setState={this.setState.bind(this)}
+                    serverUrl={this.state.serverUrl}
+                    serverInfo={this.state.serverInfo}
+                    getServerInfo={this.getServerInfo.bind(this)}
+                    token={this.state.token}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="Start"
+                options={{headerShown: false, gestureEnabled: false}}>
+                {props => (
+                  <Start
+                    setState={this.setState.bind(this)}
+                    serverUrl={this.state.serverUrl}
+                    serverInfo={this.state.serverInfo}
+                    getServerInfo={this.getServerInfo.bind(this)}
+                    token={this.state.token}
+                    {...props}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="SignUp" options={{headerShown: false}}>
+                {props => (
+                  <SignUp serverUrl={this.state.serverUrl} {...props} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>
