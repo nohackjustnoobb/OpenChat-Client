@@ -43,6 +43,8 @@ import {
 import FastImage from 'react-native-fast-image';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import {Avatar, datetimeToString} from '../App';
 
@@ -144,6 +146,7 @@ class Chat extends React.Component {
       confirm: false,
       refresh: false,
       reply: null,
+      toBottom: false,
     };
 
     this.lastMessage = false;
@@ -478,6 +481,19 @@ class Chat extends React.Component {
                   this.messagesFlatList = ref;
                 }}
                 style={{backgroundColor: '#F9F9F9'}}
+                onScroll={e => {
+                  if (
+                    e.nativeEvent.contentOffset.y >= 1000 &&
+                    !this.state.toBottom
+                  ) {
+                    this.setState({toBottom: true});
+                  } else if (
+                    e.nativeEvent.contentOffset.y < 1000 &&
+                    this.state.toBottom
+                  ) {
+                    this.setState({toBottom: false});
+                  }
+                }}
                 contentContainerStyle={{
                   flexGrow: 1,
                   justifyContent: 'flex-end',
@@ -607,6 +623,9 @@ class Chat extends React.Component {
                           <Menu
                             name={`${item.id}`}
                             renderer={renderers.Popover}
+                            onOpen={() =>
+                              ReactNativeHapticFeedback.trigger('impactMedium')
+                            }
                             rendererProps={{
                               preferredPlacement: 'right',
                               anchorStyle: {
@@ -620,224 +639,244 @@ class Chat extends React.Component {
                                 TriggerTouchableComponent:
                                   TouchableWithoutFeedback,
                               }}>
-                              <DropShadow
-                                style={{
-                                  shadowColor: '#000000',
-                                  shadowOffset: {
-                                    width: -1,
-                                    height: 1,
-                                  },
-                                  shadowOpacity: 0.1,
-                                  shadowRadius: 1,
-                                  flexDirection: 'row',
-                                }}>
-                                <View
+                              <Swipeable
+                                friction={3}
+                                containerStyle={{overflow: 'visible'}}
+                                onSwipeableLeftWillOpen={() => {
+                                  ReactNativeHapticFeedback.trigger(
+                                    'impactMedium',
+                                  );
+                                  this.setState({reply: item.id});
+                                }}
+                                renderLeftActions={() => (
+                                  <View
+                                    style={{width: item.deleted ? 0 : 0.5}}
+                                  />
+                                )}>
+                                <DropShadow
                                   style={{
-                                    padding: item.additionImage ? 5 : 7,
-                                    borderRadius: 7,
-                                    backgroundColor:
-                                      item.owner === this.props.userInfo.id
-                                        ? '#6873F2'
-                                        : '#ffffff',
-                                    marginLeft:
-                                      displayUser || displayDate ? 0 : 55,
-                                    paddingBottom: 2,
-                                    maxWidth:
-                                      Dimensions.get('window').width - 70,
+                                    shadowColor: '#000000',
+                                    shadowOffset: {
+                                      width: -1,
+                                      height: 1,
+                                    },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 1,
+                                    flexDirection: 'row',
                                   }}>
-                                  {item.deleted ? (
-                                    <View
-                                      style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        opacity: 0.6,
-                                      }}>
-                                      <Icon
-                                        name="cancel"
-                                        size={16}
-                                        color={
-                                          item.owner === this.props.userInfo.id
-                                            ? '#ffffff'
-                                            : '#000000'
-                                        }
-                                      />
-                                      <Text
+                                  <View
+                                    style={{
+                                      padding: item.additionImage ? 5 : 7,
+                                      borderRadius: 7,
+                                      backgroundColor:
+                                        item.owner === this.props.userInfo.id
+                                          ? '#6873F2'
+                                          : '#ffffff',
+                                      marginLeft:
+                                        displayUser || displayDate ? 0 : 55,
+                                      paddingBottom: 2,
+                                      maxWidth:
+                                        Dimensions.get('window').width - 70,
+                                    }}>
+                                    {item.deleted ? (
+                                      <View
                                         style={{
-                                          color:
+                                          flexDirection: 'row',
+                                          alignItems: 'center',
+                                          opacity: 0.6,
+                                        }}>
+                                        <Icon
+                                          name="cancel"
+                                          size={16}
+                                          color={
                                             item.owner ===
                                             this.props.userInfo.id
                                               ? '#ffffff'
-                                              : '#000000',
-                                          marginLeft: 5,
-                                        }}>
-                                        Deleted Message
-                                      </Text>
-                                    </View>
-                                  ) : (
-                                    <>
-                                      <View
-                                        style={{
-                                          display: item.replyTo
-                                            ? 'flex'
-                                            : 'none',
-                                          flexDirection: 'row',
-                                          marginBottom: 5,
-                                          backgroundColor:
-                                            item.owner !==
-                                            this.props.userInfo.id
-                                              ? '#00000010'
-                                              : '#00000025',
-                                          borderRadius: 5,
-                                          overflow: 'hidden',
-                                        }}>
+                                              : '#000000'
+                                          }
+                                        />
+                                        <Text
+                                          style={{
+                                            color:
+                                              item.owner ===
+                                              this.props.userInfo.id
+                                                ? '#ffffff'
+                                                : '#000000',
+                                            marginLeft: 5,
+                                          }}>
+                                          Deleted Message
+                                        </Text>
+                                      </View>
+                                    ) : (
+                                      <>
                                         <View
                                           style={{
+                                            display: item.replyTo
+                                              ? 'flex'
+                                              : 'none',
+                                            flexDirection: 'row',
+                                            marginBottom: 5,
                                             backgroundColor:
                                               item.owner !==
                                               this.props.userInfo.id
-                                                ? '#6873F2'
-                                                : '#ffffff',
-                                            width: 5,
-                                          }}
-                                        />
-                                        <View
-                                          style={{
-                                            flexDirection: 'row',
-                                            justifyContent: 'space-between',
-                                            flexGrow: 1,
+                                                ? '#00000010'
+                                                : '#00000025',
+                                            borderRadius: 5,
+                                            overflow: 'hidden',
                                           }}>
                                           <View
                                             style={{
-                                              marginHorizontal: 10,
-                                              marginVertical: 7,
+                                              backgroundColor:
+                                                item.owner !==
+                                                this.props.userInfo.id
+                                                  ? '#6873F2'
+                                                  : '#ffffff',
+                                              width: 5,
+                                            }}
+                                          />
+                                          <View
+                                            style={{
+                                              flexDirection: 'row',
+                                              justifyContent: 'space-between',
+                                              flexGrow: 1,
                                             }}>
-                                            <Text
-                                              style={{
-                                                color:
-                                                  item.owner !==
-                                                  this.props.userInfo.id
-                                                    ? '#6873F2'
-                                                    : '#ffffff',
-                                                fontWeight: '500',
-                                              }}>
-                                              {
-                                                this.props.user[
-                                                  item.replyTo?.owner
-                                                ]?.username
-                                              }
-                                            </Text>
                                             <View
                                               style={{
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
+                                                marginHorizontal: 10,
+                                                marginVertical: 7,
                                               }}>
-                                              <FontAwesomeIcon
-                                                icon={faImage}
-                                                size={15}
-                                                style={{
-                                                  marginRight: 5,
-                                                  display:
-                                                    !item.replyTo?.content &&
-                                                    item.replyTo?.additionImage
-                                                      ? 'flex'
-                                                      : 'none',
-                                                }}
-                                                color={
-                                                  item.owner !==
-                                                  this.props.userInfo.id
-                                                    ? '#000000'
-                                                    : '#ffffff'
-                                                }
-                                              />
                                               <Text
                                                 style={{
                                                   color:
                                                     item.owner !==
                                                     this.props.userInfo.id
-                                                      ? '#000000'
+                                                      ? '#6873F2'
                                                       : '#ffffff',
-                                                  maxWidth:
-                                                    Dimensions.get('window')
-                                                      .width - 154,
+                                                  fontWeight: '500',
                                                 }}>
-                                                {!item.replyTo?.content &&
-                                                item.replyTo?.additionImage
-                                                  ? 'Image'
-                                                  : item.replyTo?.content}
+                                                {
+                                                  this.props.user[
+                                                    item.replyTo?.owner
+                                                  ]?.username
+                                                }
                                               </Text>
+                                              <View
+                                                style={{
+                                                  flexDirection: 'row',
+                                                  alignItems: 'center',
+                                                }}>
+                                                <FontAwesomeIcon
+                                                  icon={faImage}
+                                                  size={15}
+                                                  style={{
+                                                    marginRight: 5,
+                                                    display:
+                                                      !item.replyTo?.content &&
+                                                      item.replyTo
+                                                        ?.additionImage
+                                                        ? 'flex'
+                                                        : 'none',
+                                                  }}
+                                                  color={
+                                                    item.owner !==
+                                                    this.props.userInfo.id
+                                                      ? '#000000'
+                                                      : '#ffffff'
+                                                  }
+                                                />
+                                                <Text
+                                                  style={{
+                                                    color:
+                                                      item.owner !==
+                                                      this.props.userInfo.id
+                                                        ? '#000000'
+                                                        : '#ffffff',
+                                                    maxWidth:
+                                                      Dimensions.get('window')
+                                                        .width - 154,
+                                                  }}>
+                                                  {!item.replyTo?.content &&
+                                                  item.replyTo?.additionImage
+                                                    ? 'Image'
+                                                    : item.replyTo?.content}
+                                                </Text>
+                                              </View>
                                             </View>
+                                            <FastImage
+                                              style={{
+                                                width: 35,
+                                                height: 35,
+                                                borderRadius: 5,
+                                                alignSelf: 'center',
+                                                display: item.replyTo
+                                                  ?.additionImage
+                                                  ? 'flex'
+                                                  : 'none',
+                                                marginHorizontal: 5,
+                                              }}
+                                              source={{
+                                                uri:
+                                                  this.props.serverUrl?.slice(
+                                                    0,
+                                                    -1,
+                                                  ) +
+                                                  item.replyTo?.additionImage,
+                                              }}
+                                            />
                                           </View>
-                                          <FastImage
-                                            style={{
-                                              width: 35,
-                                              height: 35,
-                                              borderRadius: 5,
-                                              alignSelf: 'center',
-                                              display: item.replyTo
-                                                ?.additionImage
-                                                ? 'flex'
-                                                : 'none',
-                                              marginHorizontal: 5,
-                                            }}
-                                            source={{
-                                              uri:
-                                                this.props.serverUrl?.slice(
-                                                  0,
-                                                  -1,
-                                                ) + item.replyTo?.additionImage,
-                                            }}
-                                          />
                                         </View>
-                                      </View>
 
-                                      {item.additionImage ? (
-                                        <AdditionImage />
-                                      ) : (
-                                        <></>
-                                      )}
-                                      <View
-                                        style={{
-                                          display: item.additionFile
-                                            ? 'flex'
-                                            : 'none',
-                                        }}>
-                                        <Text style={{color: 'red'}}>File</Text>
-                                      </View>
+                                        {item.additionImage ? (
+                                          <AdditionImage />
+                                        ) : (
+                                          <></>
+                                        )}
+                                        <View
+                                          style={{
+                                            display: item.additionFile
+                                              ? 'flex'
+                                              : 'none',
+                                          }}>
+                                          <Text style={{color: 'red'}}>
+                                            File
+                                          </Text>
+                                        </View>
 
-                                      <Text
-                                        style={{
-                                          display: item.content
-                                            ? 'flex'
-                                            : 'none',
-                                          color:
-                                            item.owner ===
-                                            this.props.userInfo.id
-                                              ? '#ffffff'
-                                              : '#000000',
-                                        }}>
-                                        {item.content}
-                                      </Text>
-                                    </>
-                                  )}
-                                  <Text
-                                    style={{
-                                      fontSize: 10,
-                                      opacity: 0.6,
-                                      fontWeight: '300',
-                                      color:
-                                        item.owner === this.props.userInfo.id
-                                          ? '#ffffff'
-                                          : '#000000',
-                                      marginTop: 3,
-                                    }}>
-                                    {messageDate.toLocaleString('en-US', {
-                                      hour: 'numeric',
-                                      minute: 'numeric',
-                                      hour12: true,
-                                    })}
-                                  </Text>
-                                </View>
-                              </DropShadow>
+                                        <Text
+                                          style={{
+                                            display: item.content
+                                              ? 'flex'
+                                              : 'none',
+                                            color:
+                                              item.owner ===
+                                              this.props.userInfo.id
+                                                ? '#ffffff'
+                                                : '#000000',
+                                          }}>
+                                          {item.content}
+                                        </Text>
+                                      </>
+                                    )}
+                                    <Text
+                                      style={{
+                                        fontSize: 10,
+                                        opacity: 0.6,
+                                        fontWeight: '300',
+                                        color:
+                                          item.owner === this.props.userInfo.id
+                                            ? '#ffffff'
+                                            : '#000000',
+                                        marginTop: 3,
+                                      }}>
+                                      {messageDate.toLocaleString('en-US', {
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        hour12: true,
+                                      })}
+                                    </Text>
+                                  </View>
+                                </DropShadow>
+                              </Swipeable>
                             </MenuTrigger>
                             <MenuOptions
                               customStyles={{
@@ -945,6 +984,28 @@ class Chat extends React.Component {
                   );
                 }}
               />
+              <TouchableWithoutFeedback
+                onPress={() => this.messagesFlatList.scrollToIndex({index: 0})}>
+                <View
+                  style={{
+                    position: 'absolute',
+                    bottom: insets.bottom + 70,
+                    right: 13,
+                    display: this.state.toBottom ? 'flex' : 'none',
+                    borderRadius: 10,
+                    padding: 3,
+                    overflow: 'hidden',
+                    backgroundColor: '#ffffff',
+                    borderColor: '#6873F2',
+                    borderWidth: 0.5,
+                  }}>
+                  <Icon
+                    name="arrow-down-circle-outline"
+                    size={30}
+                    color="#6873F2"
+                  />
+                </View>
+              </TouchableWithoutFeedback>
               <View
                 style={{
                   backgroundColor: '#ffffff',
