@@ -150,7 +150,7 @@ class Login extends React.Component {
             placeholder="password"
             autoCorrect={false}
             returnKeyType="done"
-            onSubmitEditing={() => this.login()}
+            onSubmitEditing={this.login.bind(this)}
           />
           <Button
             title="Log In"
@@ -160,7 +160,7 @@ class Login extends React.Component {
               width: 250,
               alignSelf: 'center',
             }}
-            onPress={() => this.login()}
+            onPress={this.login.bind(this)}
           />
           <View style={{height: 85}} />
         </KeyboardAvoidingView>

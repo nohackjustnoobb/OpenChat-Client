@@ -10,7 +10,6 @@ import {
   Alert,
   Platform,
   Modal,
-  Image,
   TextInput,
   LogBox,
   ActivityIndicator,
@@ -38,6 +37,7 @@ import {
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 import {Button, CheckBox} from 'react-native-elements';
 import {launchImageLibrary} from 'react-native-image-picker';
+import FastImage from 'react-native-fast-image';
 
 // components
 import Home from './components/Home';
@@ -58,6 +58,9 @@ LogBox.ignoreAllLogs();
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// check if hermes in use
+const isHermes = () => !!global.HermesInternal;
 
 // Title
 function HomeHeaderTitle(props) {
@@ -173,7 +176,7 @@ function Avatar(props) {
         overflow: 'hidden',
       }}>
       {props.uri ? (
-        <Image
+        <FastImage
           source={{
             uri: props.uri,
           }}
@@ -188,6 +191,23 @@ function Avatar(props) {
       )}
     </View>
   );
+}
+
+function fixHermesTime(datetime) {
+  var timeString = datetime.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  });
+
+  if (isHermes()) {
+    var hour = datetime.getHours();
+    timeString = `${hour > 12 ? hour - 12 : hour}:${datetime.getMinutes()} ${
+      hour > 12 ? 'PM' : 'AM'
+    }`;
+  }
+
+  return timeString;
 }
 
 function datetimeToString(datetime) {
@@ -219,11 +239,7 @@ function datetimeToString(datetime) {
     }
   }
 
-  return `${datetimeString} ${datetime.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true,
-  })}`;
+  return `${datetimeString} ${fixHermesTime(datetime)}`;
 }
 
 class App extends React.Component {
@@ -922,6 +938,46 @@ class App extends React.Component {
     this.ws.send(JSON.stringify({track: {id: id, discard: discard}}));
   }
 
+  // onPress function
+
+  createOrNext() {
+    if (this.state.next) {
+      if (this.state.groupName) {
+        this.createGroup();
+        this.setState({
+          modal: false,
+          selectedUser: [],
+          next: false,
+          groupAvatar: null,
+          groupName: '',
+        });
+      } else {
+        Alert.alert('Please enter group name');
+      }
+    } else {
+      this.setState({next: true});
+    }
+  }
+
+  getGroupAvatar() {
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      if (!response.didCancel)
+        this.setState({
+          groupAvatar: response.assets[0],
+        });
+    });
+  }
+
+  checkBox(v) {
+    var selectedUser = this.state.selectedUser;
+    if (this.state.selectedUser.find(e => e === v)) {
+      selectedUser.pop(v);
+    } else {
+      selectedUser.push(v);
+    }
+    this.setState({selectedUser: selectedUser});
+  }
+
   render() {
     return (
       <MenuProvider>
@@ -1085,40 +1141,13 @@ class App extends React.Component {
                             containerStyle={{marginRight: 15, marginTop: 10}}
                             titleStyle={{color: '#6873F2'}}
                             disabled={!this.state.selectedUser.length}
-                            onPress={() => {
-                              if (this.state.next) {
-                                if (this.state.groupName) {
-                                  this.createGroup();
-                                  this.setState({
-                                    modal: false,
-                                    selectedUser: [],
-                                    next: false,
-                                    groupAvatar: null,
-                                    groupName: '',
-                                  });
-                                } else {
-                                  Alert.alert('Please enter group name');
-                                }
-                              } else {
-                                this.setState({next: true});
-                              }
-                            }}
+                            onPress={this.createOrNext.bind(this)}
                           />
                         </View>
                         {this.state.next ? (
                           <View style={{flex: 1}}>
                             <TouchableOpacity
-                              onPress={() => {
-                                launchImageLibrary(
-                                  {mediaType: 'photo'},
-                                  response => {
-                                    if (!response.didCancel)
-                                      this.setState({
-                                        groupAvatar: response.assets[0],
-                                      });
-                                  },
-                                );
-                              }}
+                              onPress={this.getGroupAvatar.bind(this)}
                               style={{alignSelf: 'center'}}>
                               <Avatar
                                 size={150}
@@ -1156,34 +1185,15 @@ class App extends React.Component {
                                   marginBottom: 5,
                                 }}
                                 key={v.id}>
-                                <View
-                                  style={{
-                                    backgroundColor: '#CCCCCC',
-                                    height: 35,
-                                    width: 35,
-                                    borderRadius: 25,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    marginRight: 10,
-                                    overflow: 'hidden',
-                                  }}>
-                                  {this.state.user[v]?.avatar ? (
-                                    <Image
-                                      source={{
-                                        uri:
-                                          this.state.serverUrl?.slice(0, -1) +
-                                          this.state.user[v].avatar,
-                                      }}
-                                      style={{height: 35, width: 35}}
-                                    />
-                                  ) : (
-                                    <FontAwesomeIcon
-                                      icon={faUser}
-                                      color="#ffffff"
-                                      size={18}
-                                    />
-                                  )}
-                                </View>
+                                <Avatar
+                                  size={35}
+                                  uri={
+                                    this.state.user[v]?.avatar
+                                      ? this.state.serverUrl?.slice(0, -1) +
+                                        this.state.user[v].avatar
+                                      : undefined
+                                  }
+                                />
                                 <View
                                   style={{
                                     justifyContent: 'center',
@@ -1206,17 +1216,7 @@ class App extends React.Component {
                                   checked={Boolean(
                                     this.state.selectedUser.find(e => e === v),
                                   )}
-                                  onPress={() => {
-                                    var selectedUser = this.state.selectedUser;
-                                    if (
-                                      this.state.selectedUser.find(e => e === v)
-                                    ) {
-                                      selectedUser.pop(v);
-                                    } else {
-                                      selectedUser.push(v);
-                                    }
-                                    this.setState({selectedUser: selectedUser});
-                                  }}
+                                  onPress={() => this.checkBox(v)}
                                 />
                               </View>
                             ))}
@@ -1371,5 +1371,5 @@ class App extends React.Component {
   }
 }
 
-export {BackHeaderLeft, Avatar, datetimeToString};
+export {BackHeaderLeft, Avatar, datetimeToString, fixHermesTime};
 export default App;

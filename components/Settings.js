@@ -308,7 +308,7 @@ class Settings extends React.Component {
                 {
                   text: 'Yes',
                   style: 'destructive',
-                  onPress: () => this.props.logout(),
+                  onPress: this.props.logout,
                 },
               ])
             }
@@ -331,7 +331,7 @@ class Settings extends React.Component {
                 {
                   text: 'Yes',
                   style: 'destructive',
-                  onPress: () => this.props.disconnectServer(),
+                  onPress: this.props.disconnectServer,
                 },
               ])
             }

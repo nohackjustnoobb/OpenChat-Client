@@ -232,7 +232,7 @@ class Start extends React.Component {
                     width: 100,
                     marginRight: 5,
                   }}
-                  onPress={() => this.connectToServer()}
+                  onPress={this.connectToServer.bind(this)}
                 />
                 <Button
                   title="Cancel"

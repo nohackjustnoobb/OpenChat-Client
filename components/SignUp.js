@@ -176,7 +176,7 @@ class SignUp extends React.Component {
                 width: 250,
                 alignSelf: 'center',
               }}
-              onPress={() => this.signup()}
+              onPress={this.signup.bind(this)}
             />
           </View>
           <View style={{height: 100}} />

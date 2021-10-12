@@ -46,12 +46,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-import {Avatar, datetimeToString} from '../App';
+import {Avatar, datetimeToString, fixHermesTime} from '../App';
 
 function ChatHeaderLeft(props) {
   return (
     <View style={{flexDirection: 'row', alignItems: 'center'}}>
-      <TouchableOpacity onPress={() => props.goBack()}>
+      <TouchableOpacity onPress={props.goBack}>
         <FontAwesomeIcon
           icon={faChevronLeft}
           size={21}
@@ -62,7 +62,7 @@ function ChatHeaderLeft(props) {
 
       <TouchableOpacity
         style={{flexDirection: 'row', alignItems: 'center'}}
-        onPress={() => props.groupInfo()}>
+        onPress={props.groupInfo}>
         <Avatar
           size={35}
           uri={
@@ -82,7 +82,7 @@ function ChatHeaderLeft(props) {
               color: '#888888',
               width: '100%',
               fontSize: 11,
-              display: !props.last_login ? 'none' : 'flex',
+              display: !props.last_login && props.isDM ? 'none' : 'flex',
             }}>
             {props.isDM
               ? props.isOnline
@@ -132,6 +132,390 @@ function MenuItem(props) {
     </View>
   );
 }
+
+function datesEqual(a, b) {
+  return !(a > b || b > a);
+}
+
+function withActions(component, options) {
+  return (
+    <Menu
+      name={`${options.id}`}
+      renderer={renderers.Popover}
+      onOpen={() => ReactNativeHapticFeedback.trigger('impactMedium')}
+      rendererProps={{
+        preferredPlacement: 'right',
+        anchorStyle: {
+          zIndex: 2,
+        },
+      }}>
+      <MenuTrigger
+        triggerOnLongPress
+        customStyles={{
+          TriggerTouchableComponent: TouchableWithoutFeedback,
+        }}>
+        <Swipeable
+          friction={3}
+          containerStyle={{overflow: 'visible'}}
+          onSwipeableLeftWillOpen={() => {
+            ReactNativeHapticFeedback.trigger('impactMedium');
+            options.reply();
+          }}
+          renderLeftActions={() => <View style={{width: 0.5}} />}>
+          {component}
+        </Swipeable>
+      </MenuTrigger>
+      <MenuOptions
+        customStyles={{
+          optionsContainer: {
+            shadowColor: '#000000',
+            shadowOffset: {
+              width: 1,
+              height: 1,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            borderRadius: 10,
+            width: 150,
+            padding: 10,
+            marginLeft: options.display,
+          },
+          optionWrapper: {padding: 0},
+          OptionTouchableComponent: TouchableOpacity,
+        }}>
+        <MenuOption onSelect={options.pin}>
+          <MenuItem
+            title={options.pinned ? 'Unpin' : 'Pin'}
+            icon={options.pinned ? 'pin-off-outline' : 'pin-outline'}
+            isDisable={options.pinIsDisable}
+          />
+        </MenuOption>
+        <MenuOption onSelect={options.reply}>
+          <MenuItem title="Reply" icon="reply-outline" />
+        </MenuOption>
+        <MenuOption onSelect={() => Clipboard.setString(options.content)}>
+          <MenuItem
+            title="Copy"
+            icon="content-copy"
+            underline={!options.ownMessage}
+          />
+        </MenuOption>
+        <MenuOption onSelect={options.messageInfo}>
+          <MenuItem
+            title="Info"
+            icon="information-outline"
+            isDisable={options.ownMessage}
+          />
+        </MenuOption>
+        <MenuOption onSelect={options.deleteMessage}>
+          <MenuItem
+            title="Delete"
+            icon="delete-outline"
+            color="#ff6666"
+            underline={false}
+            isDisable={options.ownMessage}
+          />
+        </MenuOption>
+      </MenuOptions>
+    </Menu>
+  );
+}
+
+const Message = React.memo(
+  function Message({
+    item,
+    displayUser,
+    previousMessageDate,
+    onPressImageView,
+    serverUrl,
+    avatar,
+    username,
+    reply,
+    ownID,
+    replyToUsername,
+    pin,
+    messageInfo,
+    deleteMessage,
+    pinIsDisable,
+  }) {
+    // handle message date
+    var messageDate = new Date(item.sendDateTime);
+    var displayDate =
+      messageDate.getUTCFullYear() !== previousMessageDate.getUTCFullYear() ||
+      messageDate.getUTCMonth() !== previousMessageDate.getUTCMonth() ||
+      messageDate.getUTCDate() !== previousMessageDate.getUTCDate();
+
+    // handle message with image
+    const AdditionImage = withMenuContext(props => (
+      <TouchableWithoutFeedback
+        onPress={onPressImageView}
+        onLongPress={() => props.ctx.menuActions.openMenu(`${item.id}`)}>
+        <FastImage
+          source={{
+            uri: serverUrl?.slice(0, -1) + item.additionImage,
+          }}
+          style={{
+            marginBottom: 3,
+            overflow: 'hidden',
+            borderRadius: 3,
+            width: Dimensions.get('window').width - 80,
+            height: ((Dimensions.get('window').width - 80) * 9) / 16,
+          }}
+        />
+      </TouchableWithoutFeedback>
+    ));
+
+    const message = (
+      <DropShadow
+        style={{
+          shadowColor: '#000000',
+          shadowOffset: {
+            width: -1,
+            height: 1,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 1,
+          flexDirection: 'row',
+        }}>
+        <View
+          style={{
+            padding: item.additionImage ? 5 : 7,
+            borderRadius: 7,
+            backgroundColor: item.owner === ownID ? '#6873F2' : '#ffffff',
+            marginLeft: displayUser || displayDate ? 0 : 55,
+            paddingBottom: 2,
+            maxWidth: Dimensions.get('window').width - 70,
+          }}>
+          {item.deleted ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                opacity: 0.6,
+              }}>
+              <Icon
+                name="cancel"
+                size={16}
+                color={item.owner === ownID ? '#ffffff' : '#000000'}
+              />
+              <Text
+                style={{
+                  color: item.owner === ownID ? '#ffffff' : '#000000',
+                  marginLeft: 5,
+                }}>
+                Deleted Message
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View
+                style={{
+                  display: item.replyTo ? 'flex' : 'none',
+                  flexDirection: 'row',
+                  marginBottom: 5,
+                  backgroundColor:
+                    item.owner !== ownID ? '#00000010' : '#00000025',
+                  borderRadius: 5,
+                  overflow: 'hidden',
+                }}>
+                <View
+                  style={{
+                    backgroundColor:
+                      item.owner !== ownID ? '#6873F2' : '#ffffff',
+                    width: 5,
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    flexGrow: 1,
+                  }}>
+                  <View
+                    style={{
+                      marginHorizontal: 10,
+                      marginVertical: 7,
+                    }}>
+                    <Text
+                      style={{
+                        color: item.owner !== ownID ? '#6873F2' : '#ffffff',
+                        fontWeight: '500',
+                      }}>
+                      {replyToUsername}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}>
+                      <FontAwesomeIcon
+                        icon={faImage}
+                        size={15}
+                        style={{
+                          marginRight: 5,
+                          display:
+                            !item.replyTo?.content &&
+                            item.replyTo?.additionImage
+                              ? 'flex'
+                              : 'none',
+                        }}
+                        color={item.owner !== ownID ? '#000000' : '#ffffff'}
+                      />
+                      <Text
+                        style={{
+                          color: item.owner !== ownID ? '#000000' : '#ffffff',
+                          maxWidth: Dimensions.get('window').width - 154,
+                        }}>
+                        {!item.replyTo?.content && item.replyTo?.additionImage
+                          ? 'Image'
+                          : item.replyTo?.content}
+                      </Text>
+                    </View>
+                  </View>
+                  <FastImage
+                    style={{
+                      width: 35,
+                      height: 35,
+                      borderRadius: 5,
+                      alignSelf: 'center',
+                      display: item.replyTo?.additionImage ? 'flex' : 'none',
+                      marginHorizontal: 5,
+                    }}
+                    source={{
+                      uri:
+                        serverUrl?.slice(0, -1) + item.replyTo?.additionImage,
+                    }}
+                  />
+                </View>
+              </View>
+
+              {item.additionImage ? <AdditionImage /> : <></>}
+              <View
+                style={{
+                  display: item.additionFile ? 'flex' : 'none',
+                }}>
+                <Text style={{color: 'red'}}>File</Text>
+              </View>
+
+              <Text
+                style={{
+                  display: item.content ? 'flex' : 'none',
+                  color: item.owner === ownID ? '#ffffff' : '#000000',
+                }}>
+                {item.content}
+              </Text>
+            </>
+          )}
+          <Text
+            style={{
+              fontSize: 10,
+              opacity: 0.6,
+              fontWeight: '300',
+              color: item.owner === ownID ? '#ffffff' : '#000000',
+              marginTop: 3,
+            }}>
+            {fixHermesTime(messageDate)}
+          </Text>
+        </View>
+      </DropShadow>
+    );
+
+    return (
+      <View>
+        <DropShadow
+          style={{
+            display: displayDate ? 'flex' : 'none',
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000000',
+            shadowOffset: {
+              width: -1,
+              height: 1,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 1,
+          }}>
+          <Text
+            style={{
+              backgroundColor: '#6873F2',
+              color: '#ffffff',
+              fontWeight: '600',
+              padding: 2,
+              paddingHorizontal: 6,
+              borderRadius: 7,
+              overflow: 'hidden',
+              opacity: 0.6,
+              margin: 5,
+              fontSize: 11,
+            }}>
+            {messageDate.toLocaleDateString('en-GB')}
+          </Text>
+        </DropShadow>
+        <View
+          style={{
+            flexDirection: 'row',
+            marginBottom: 5,
+          }}>
+          <View
+            style={{
+              marginLeft: 10,
+              display: displayUser || displayDate ? 'flex' : 'none',
+            }}>
+            <Avatar
+              size={35}
+              uri={avatar ? serverUrl?.slice(0, -1) + avatar : undefined}
+            />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontWeight: '500',
+                marginBottom: 3,
+                display: displayUser || displayDate ? 'flex' : 'none',
+              }}>
+              {username}
+            </Text>
+            {item.deleted
+              ? message
+              : withActions(message, {
+                  id: item.id,
+                  reply: reply,
+                  display: displayDate || displayUser ? 0 : undefined,
+                  pin: pin,
+                  pinned: item.pinned,
+                  pinIsDisable: pinIsDisable,
+                  ownMessage: item.owner !== ownID,
+                  content: item.content,
+                  messageInfo: messageInfo,
+                  deleteMessage: deleteMessage,
+                })}
+          </View>
+        </View>
+      </View>
+    );
+  },
+  (prevProps, nextProps) => {
+    var isChange = false;
+    for (const [key, value] of Object.entries(prevProps)) {
+      if (typeof value === 'function') continue;
+
+      if (value !== nextProps[key]) {
+        var date = new Date(value);
+        if (
+          !isNaN(date.getTime()) &&
+          datesEqual(date, new Date(nextProps[key]))
+        ) {
+          continue;
+        } else {
+          isChange = true;
+          break;
+        }
+      }
+    }
+
+    return !isChange;
+  },
+);
 
 // Chat Page
 class Chat extends React.Component {
@@ -233,7 +617,7 @@ class Chat extends React.Component {
               group: this.group.id,
             })
           }
-          {...(this.userID
+          {...(this.group.isDM
             ? {
                 isOnline: this.props.user[this.userID]?.isOnline,
                 last_login: this.props.user[this.userID]?.last_login,
@@ -515,472 +899,49 @@ class Chat extends React.Component {
                     this.props.getUserByID([item.owner]);
                   }
 
-                  // check if user info need to be display
-                  var displayUser =
-                    index === messagesSort.lenghth - 1 ||
-                    item.owner !== messagesSort[index + 1]?.owner;
-
-                  // handle message date
-                  var messageDate = new Date(item.sendDateTime);
-                  var previousMessageDate = new Date(
-                    messagesSort[index + 1]?.sendDateTime,
-                  );
-                  var displayDate =
-                    messageDate.getUTCFullYear() !==
-                      previousMessageDate.getUTCFullYear() ||
-                    messageDate.getUTCMonth() !==
-                      previousMessageDate.getUTCMonth() ||
-                    messageDate.getUTCDate() !==
-                      previousMessageDate.getUTCDate();
-
-                  // handle message with image
-                  const AdditionImage = withMenuContext(props => (
-                    <TouchableWithoutFeedback
-                      onPress={() => this.setState({imageView: index})}
-                      onLongPress={() =>
-                        props.ctx.menuActions.openMenu(`${item.id}`)
-                      }>
-                      <FastImage
-                        source={{
-                          uri:
-                            this.props.serverUrl?.slice(0, -1) +
-                            item.additionImage,
-                        }}
-                        style={{
-                          marginBottom: 3,
-                          overflow: 'hidden',
-                          borderRadius: 3,
-                          width: Dimensions.get('window').width - 80,
-                          height:
-                            ((Dimensions.get('window').width - 80) * 9) / 16,
-                        }}
-                      />
-                    </TouchableWithoutFeedback>
-                  ));
+                  var previousMessage = messagesSort[index + 1];
+                  var owner = this.props.user[item.owner];
+                  var ownID = this.props.userInfo.id;
 
                   return (
-                    <View>
-                      <DropShadow
-                        style={{
-                          display: displayDate ? 'flex' : 'none',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          shadowColor: '#000000',
-                          shadowOffset: {
-                            width: -1,
-                            height: 1,
-                          },
-                          shadowOpacity: 0.1,
-                          shadowRadius: 1,
-                        }}>
-                        <Text
-                          style={{
-                            backgroundColor: '#6873F2',
-                            color: '#ffffff',
-                            fontWeight: '600',
-                            padding: 2,
-                            paddingHorizontal: 6,
-                            borderRadius: 7,
-                            overflow: 'hidden',
-                            opacity: 0.6,
-                            margin: 5,
-                            fontSize: 11,
-                          }}>
-                          {messageDate.toLocaleDateString('en-GB')}
-                        </Text>
-                      </DropShadow>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          marginBottom: 5,
-                        }}>
-                        <View
-                          style={{
-                            marginLeft: 10,
-                            display:
-                              displayUser || displayDate ? 'flex' : 'none',
-                          }}>
-                          <Avatar
-                            size={35}
-                            uri={
-                              this.props.user[item.owner]?.avatar
-                                ? this.props.serverUrl?.slice(0, -1) +
-                                  this.props.user[item.owner].avatar
-                                : undefined
-                            }
-                          />
-                        </View>
-                        <View>
-                          <Text
-                            style={{
-                              fontWeight: '500',
-                              marginBottom: 3,
-                              display:
-                                displayUser || displayDate ? 'flex' : 'none',
-                            }}>
-                            {this.props.user[item.owner]?.username}
-                          </Text>
-                          <Menu
-                            name={`${item.id}`}
-                            renderer={renderers.Popover}
-                            onOpen={() =>
-                              ReactNativeHapticFeedback.trigger('impactMedium')
-                            }
-                            rendererProps={{
-                              preferredPlacement: 'right',
-                              anchorStyle: {
-                                zIndex: 2,
-                              },
-                            }}>
-                            <MenuTrigger
-                              disabled={item.deleted}
-                              triggerOnLongPress
-                              customStyles={{
-                                TriggerTouchableComponent:
-                                  TouchableWithoutFeedback,
-                              }}>
-                              <Swipeable
-                                friction={3}
-                                containerStyle={{overflow: 'visible'}}
-                                onSwipeableLeftWillOpen={() => {
-                                  ReactNativeHapticFeedback.trigger(
-                                    'impactMedium',
-                                  );
-                                  this.setState({reply: item.id});
-                                }}
-                                renderLeftActions={() => (
-                                  <View
-                                    style={{width: item.deleted ? 0 : 0.5}}
-                                  />
-                                )}>
-                                <DropShadow
-                                  style={{
-                                    shadowColor: '#000000',
-                                    shadowOffset: {
-                                      width: -1,
-                                      height: 1,
-                                    },
-                                    shadowOpacity: 0.1,
-                                    shadowRadius: 1,
-                                    flexDirection: 'row',
-                                  }}>
-                                  <View
-                                    style={{
-                                      padding: item.additionImage ? 5 : 7,
-                                      borderRadius: 7,
-                                      backgroundColor:
-                                        item.owner === this.props.userInfo.id
-                                          ? '#6873F2'
-                                          : '#ffffff',
-                                      marginLeft:
-                                        displayUser || displayDate ? 0 : 55,
-                                      paddingBottom: 2,
-                                      maxWidth:
-                                        Dimensions.get('window').width - 70,
-                                    }}>
-                                    {item.deleted ? (
-                                      <View
-                                        style={{
-                                          flexDirection: 'row',
-                                          alignItems: 'center',
-                                          opacity: 0.6,
-                                        }}>
-                                        <Icon
-                                          name="cancel"
-                                          size={16}
-                                          color={
-                                            item.owner ===
-                                            this.props.userInfo.id
-                                              ? '#ffffff'
-                                              : '#000000'
-                                          }
-                                        />
-                                        <Text
-                                          style={{
-                                            color:
-                                              item.owner ===
-                                              this.props.userInfo.id
-                                                ? '#ffffff'
-                                                : '#000000',
-                                            marginLeft: 5,
-                                          }}>
-                                          Deleted Message
-                                        </Text>
-                                      </View>
-                                    ) : (
-                                      <>
-                                        <View
-                                          style={{
-                                            display: item.replyTo
-                                              ? 'flex'
-                                              : 'none',
-                                            flexDirection: 'row',
-                                            marginBottom: 5,
-                                            backgroundColor:
-                                              item.owner !==
-                                              this.props.userInfo.id
-                                                ? '#00000010'
-                                                : '#00000025',
-                                            borderRadius: 5,
-                                            overflow: 'hidden',
-                                          }}>
-                                          <View
-                                            style={{
-                                              backgroundColor:
-                                                item.owner !==
-                                                this.props.userInfo.id
-                                                  ? '#6873F2'
-                                                  : '#ffffff',
-                                              width: 5,
-                                            }}
-                                          />
-                                          <View
-                                            style={{
-                                              flexDirection: 'row',
-                                              justifyContent: 'space-between',
-                                              flexGrow: 1,
-                                            }}>
-                                            <View
-                                              style={{
-                                                marginHorizontal: 10,
-                                                marginVertical: 7,
-                                              }}>
-                                              <Text
-                                                style={{
-                                                  color:
-                                                    item.owner !==
-                                                    this.props.userInfo.id
-                                                      ? '#6873F2'
-                                                      : '#ffffff',
-                                                  fontWeight: '500',
-                                                }}>
-                                                {
-                                                  this.props.user[
-                                                    item.replyTo?.owner
-                                                  ]?.username
-                                                }
-                                              </Text>
-                                              <View
-                                                style={{
-                                                  flexDirection: 'row',
-                                                  alignItems: 'center',
-                                                }}>
-                                                <FontAwesomeIcon
-                                                  icon={faImage}
-                                                  size={15}
-                                                  style={{
-                                                    marginRight: 5,
-                                                    display:
-                                                      !item.replyTo?.content &&
-                                                      item.replyTo
-                                                        ?.additionImage
-                                                        ? 'flex'
-                                                        : 'none',
-                                                  }}
-                                                  color={
-                                                    item.owner !==
-                                                    this.props.userInfo.id
-                                                      ? '#000000'
-                                                      : '#ffffff'
-                                                  }
-                                                />
-                                                <Text
-                                                  style={{
-                                                    color:
-                                                      item.owner !==
-                                                      this.props.userInfo.id
-                                                        ? '#000000'
-                                                        : '#ffffff',
-                                                    maxWidth:
-                                                      Dimensions.get('window')
-                                                        .width - 154,
-                                                  }}>
-                                                  {!item.replyTo?.content &&
-                                                  item.replyTo?.additionImage
-                                                    ? 'Image'
-                                                    : item.replyTo?.content}
-                                                </Text>
-                                              </View>
-                                            </View>
-                                            <FastImage
-                                              style={{
-                                                width: 35,
-                                                height: 35,
-                                                borderRadius: 5,
-                                                alignSelf: 'center',
-                                                display: item.replyTo
-                                                  ?.additionImage
-                                                  ? 'flex'
-                                                  : 'none',
-                                                marginHorizontal: 5,
-                                              }}
-                                              source={{
-                                                uri:
-                                                  this.props.serverUrl?.slice(
-                                                    0,
-                                                    -1,
-                                                  ) +
-                                                  item.replyTo?.additionImage,
-                                              }}
-                                            />
-                                          </View>
-                                        </View>
-
-                                        {item.additionImage ? (
-                                          <AdditionImage />
-                                        ) : (
-                                          <></>
-                                        )}
-                                        <View
-                                          style={{
-                                            display: item.additionFile
-                                              ? 'flex'
-                                              : 'none',
-                                          }}>
-                                          <Text style={{color: 'red'}}>
-                                            File
-                                          </Text>
-                                        </View>
-
-                                        <Text
-                                          style={{
-                                            display: item.content
-                                              ? 'flex'
-                                              : 'none',
-                                            color:
-                                              item.owner ===
-                                              this.props.userInfo.id
-                                                ? '#ffffff'
-                                                : '#000000',
-                                          }}>
-                                          {item.content}
-                                        </Text>
-                                      </>
-                                    )}
-                                    <Text
-                                      style={{
-                                        fontSize: 10,
-                                        opacity: 0.6,
-                                        fontWeight: '300',
-                                        color:
-                                          item.owner === this.props.userInfo.id
-                                            ? '#ffffff'
-                                            : '#000000',
-                                        marginTop: 3,
-                                      }}>
-                                      {messageDate.toLocaleString('en-US', {
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        hour12: true,
-                                      })}
-                                    </Text>
-                                  </View>
-                                </DropShadow>
-                              </Swipeable>
-                            </MenuTrigger>
-                            <MenuOptions
-                              customStyles={{
-                                optionsContainer: {
-                                  shadowColor: '#000000',
-                                  shadowOffset: {
-                                    width: 1,
-                                    height: 1,
-                                  },
-                                  shadowOpacity: 0.1,
-                                  shadowRadius: 2,
-                                  borderRadius: 10,
-                                  width: 150,
-                                  padding: 10,
-                                  marginLeft:
-                                    displayDate || displayUser ? 0 : undefined,
-                                },
-                                optionWrapper: {padding: 0},
-                                OptionTouchableComponent: TouchableOpacity,
-                              }}>
-                              <MenuOption
-                                onSelect={() =>
-                                  this.props.togglePinByID(
-                                    this.group.id,
-                                    item.id,
-                                  )
-                                }>
-                                <MenuItem
-                                  title={item.pinned ? 'Unpin' : 'Pin'}
-                                  icon={
-                                    item.pinned
-                                      ? 'pin-off-outline'
-                                      : 'pin-outline'
-                                  }
-                                  isDisable={
-                                    !this.group.isDM &&
-                                    Boolean(
-                                      this.group.groupAdmins.find(
-                                        id => id !== this.props.userInfo.id,
-                                      ) === undefined &&
-                                        this.group.owner !==
-                                          this.props.userInfo.id,
-                                    )
-                                  }
-                                />
-                              </MenuOption>
-                              <MenuOption
-                                onSelect={() =>
-                                  this.setState({reply: item.id})
-                                }>
-                                <MenuItem title="Reply" icon="reply-outline" />
-                              </MenuOption>
-                              <MenuOption
-                                onSelect={() =>
-                                  Clipboard.setString(item.content)
-                                }>
-                                <MenuItem
-                                  title="Copy"
-                                  icon="content-copy"
-                                  underline={
-                                    item.owner === this.props.userInfo.id
-                                  }
-                                />
-                              </MenuOption>
-                              <MenuOption
-                                onSelect={() =>
-                                  this.props.navigation.navigate(
-                                    'MessageInfo',
-                                    {
-                                      group: this.group.id,
-                                      message: item.id,
-                                    },
-                                  )
-                                }>
-                                <MenuItem
-                                  title="Info"
-                                  icon="information-outline"
-                                  isDisable={
-                                    item.owner !== this.props.userInfo.id
-                                  }
-                                />
-                              </MenuOption>
-                              <MenuOption
-                                onSelect={() =>
-                                  this.props.deleteMessageByID(
-                                    this.group.id,
-                                    item.id,
-                                  )
-                                }>
-                                <MenuItem
-                                  title="Delete"
-                                  icon="delete-outline"
-                                  color="#ff6666"
-                                  underline={false}
-                                  isDisable={
-                                    item.owner !== this.props.userInfo.id
-                                  }
-                                />
-                              </MenuOption>
-                            </MenuOptions>
-                          </Menu>
-                        </View>
-                      </View>
-                    </View>
+                    <Message
+                      item={item}
+                      displayUser={
+                        index === messagesSort.lenghth - 1 ||
+                        item.owner !== previousMessage?.owner
+                      }
+                      previousMessageDate={
+                        new Date(previousMessage?.sendDateTime)
+                      }
+                      onPressImageView={() => this.setState({imageView: index})}
+                      serverUrl={this.props.serverUrl}
+                      avatar={owner?.avatar}
+                      username={owner?.username}
+                      ownID={ownID}
+                      replyToUsername={
+                        this.props.user[item.replyTo?.owner]?.username
+                      }
+                      reply={() => this.setState({reply: item.id})}
+                      pin={() =>
+                        this.props.togglePinByID(this.group.id, item.id)
+                      }
+                      messageInfo={() =>
+                        this.props.navigation.navigate('MessageInfo', {
+                          group: this.group.id,
+                          message: item.id,
+                        })
+                      }
+                      deleteMessage={() =>
+                        this.props.deleteMessageByID(this.group.id, item.id)
+                      }
+                      pinIsDisable={
+                        !this.group.isDM &&
+                        Boolean(
+                          this.group.groupAdmins.find(id => id !== ownID) ===
+                            undefined && this.group.owner !== ownID,
+                        )
+                      }
+                    />
                   );
                 }}
               />
@@ -1146,4 +1107,4 @@ class Chat extends React.Component {
   }
 }
 
-export default Chat;
+export default React.memo(Chat);
