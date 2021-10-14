@@ -19,6 +19,8 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {BackHeaderLeft} from '../App';
 import ImageView from 'react-native-image-viewing';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import ColorPicker from 'react-native-wheel-color-picker';
 
 import {Avatar} from '../App';
 
@@ -27,6 +29,7 @@ class Settings extends React.Component {
   constructor(props) {
     super(props);
     this.MMKV = new MMKVStorage.Loader().initialize();
+    this.themeColor = props.themeColor;
     this.state = {
       edit: false,
       username: this.props.userInfo?.username,
@@ -34,6 +37,8 @@ class Settings extends React.Component {
       avatar: this.props.userInfo?.avatar,
       modal: false,
       avatarView: false,
+      picker: false,
+      currentColor: this.themeColor,
     };
   }
 
@@ -78,7 +83,7 @@ class Settings extends React.Component {
         <Header
           {...props}
           title="Done"
-          titleColor="#6873F2"
+          titleColor={this.themeColor}
           onPress={() => {
             this.props.patchUserInfo(
               this.state.username,
@@ -101,6 +106,15 @@ class Settings extends React.Component {
 
   render() {
     if (this.state.edit) this.updateHeader();
+
+    const defaultColor = [
+      '#F26868',
+      '#F2BCD1',
+      '#deceb4',
+      '#6dc2c9',
+      '#6873F2',
+      '#c28ef9',
+    ];
 
     return (
       <ScrollView
@@ -134,7 +148,7 @@ class Settings extends React.Component {
                 }>
                 <Text
                   style={{
-                    color: '#6873F2',
+                    color: this.themeColor,
                     fontSize: 18,
                     marginHorizontal: 20,
                     marginVertical: 5,
@@ -199,7 +213,7 @@ class Settings extends React.Component {
                 title={'Done'}
                 type="clear"
                 containerStyle={{marginRight: 15, marginTop: 10}}
-                titleStyle={{color: '#6873F2'}}
+                titleStyle={{color: this.themeColor}}
                 onPress={() => {
                   this.setState({
                     modal: false,
@@ -294,6 +308,118 @@ class Settings extends React.Component {
         </View>
         <View
           style={{
+            borderBottomWidth: 1,
+            borderTopWidth: 1,
+            borderColor: '#dddddd',
+            backgroundColor: '#ffffff',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 5,
+          }}>
+          <Text style={{padding: 10}}>Theme Color:</Text>
+          <Modal
+            visible={this.state.picker}
+            presentationStyle="fullScreen"
+            animationType="slide">
+            <SafeAreaView style={{flex: 1}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: '#ffffff',
+                }}>
+                <Button
+                  title="Cancel"
+                  type="clear"
+                  containerStyle={{marginLeft: 15, marginTop: 10}}
+                  titleStyle={{color: '#ff0000'}}
+                  onPress={() => this.setState({picker: false})}
+                />
+                <View
+                  style={{
+                    backgroundColor: this.state.currentColor,
+                    padding: 10,
+                    paddingHorizontal: 15,
+                    borderRadius: 10,
+                  }}>
+                  <Text style={{color: '#ffffff'}}>
+                    {this.state.currentColor}
+                  </Text>
+                </View>
+                <Button
+                  title={'Done'}
+                  type="clear"
+                  containerStyle={{marginRight: 15, marginTop: 10}}
+                  titleStyle={{color: this.themeColor}}
+                  onPress={() => {
+                    this.themeColor = this.state.currentColor;
+                    this.props.changeThemeColor(this.state.currentColor);
+                    this.setState({picker: false});
+                  }}
+                />
+              </View>
+              <View style={{flex: 1, marginHorizontal: 30, marginBottom: 30}}>
+                <ColorPicker
+                  color={this.state.currentColor}
+                  onColorChange={c => this.setState({currentColor: c})}
+                  onColorChangeComplete={this.onColorChangeComplete}
+                />
+              </View>
+            </SafeAreaView>
+          </Modal>
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              onPress={() => this.setState({picker: true})}
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 10,
+                width: 30,
+                height: 30,
+                borderRadius: 7,
+                backgroundColor: this.themeColor,
+              }}>
+              <Icon
+                name="brush"
+                style={{
+                  opacity: 0.7,
+                }}
+                size={22}
+              />
+            </TouchableOpacity>
+            {defaultColor.map(v => (
+              <TouchableOpacity
+                key={v}
+                onPress={() => {
+                  this.themeColor = v;
+                  this.props.changeThemeColor(v);
+                }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 7,
+                  backgroundColor: v,
+                  marginRight: 10,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Icon
+                  name="check-bold"
+                  style={{
+                    opacity: 0.5,
+                    display: v === this.themeColor ? 'flex' : 'none',
+                  }}
+                  size={18}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+        <View
+          style={{
+            marginTop: 20,
             borderBottomWidth: 1,
             borderTopWidth: 1,
             borderColor: '#dddddd',

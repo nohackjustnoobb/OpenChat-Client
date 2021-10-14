@@ -16,6 +16,7 @@ class Friends extends React.Component {
   constructor(props) {
     super(props);
     this.state = {modal: null};
+    this.themeColor = props.themeColor;
   }
 
   render() {
@@ -250,7 +251,7 @@ class Friends extends React.Component {
             <Text>Friend Request</Text>
             <View
               style={{
-                backgroundColor: '#6873F2',
+                backgroundColor: this.themeColor,
                 height: 2,
                 width: 65,
                 marginTop: 3,
@@ -269,7 +270,7 @@ class Friends extends React.Component {
             </Text>
             <View
               style={{
-                backgroundColor: '#6873F2',
+                backgroundColor: this.themeColor,
                 height: 2,
                 width: 65,
                 marginTop: 3,

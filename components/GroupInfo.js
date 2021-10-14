@@ -17,7 +17,7 @@ import {
   TextInput,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {Button, CheckBox} from 'react-native-elements';
+import {Button} from 'react-native-elements';
 import {
   faChevronLeft,
   faUsers,
@@ -32,8 +32,9 @@ import {
 } from 'react-native-safe-area-context';
 import ImageView from 'react-native-image-viewing';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import {Avatar} from '../App';
+import {Avatar, shareImage} from '../App';
 
 function GroupInfoHeaderLeft(props) {
   return (
@@ -45,11 +46,11 @@ function GroupInfoHeaderLeft(props) {
           icon={faChevronLeft}
           size={21}
           style={{marginRight: 5, marginLeft: 10}}
-          color="#6873F2"
+          color={props.themeColor}
         />
         <Text
           numberOfLines={1}
-          style={{color: '#6873F2', fontSize: 16, width: '70%'}}>
+          style={{color: props.themeColor, fontSize: 16, width: '70%'}}>
           {props.groupName}
         </Text>
       </TouchableOpacity>
@@ -63,6 +64,7 @@ class GroupInfo extends React.Component {
     this.group = props.group[props.route.params.group];
     var groupName = this.group.groupName;
     var avatar = this.group.avatar;
+    this.themeColor = props.themeColor;
 
     if (this.group.isDM) {
       this.userID = this.group.members.filter(v => v !== props.userInfo.id)[0];
@@ -86,6 +88,7 @@ class GroupInfo extends React.Component {
     this.props.navigation.setOptions({
       headerLeft: () => (
         <GroupInfoHeaderLeft
+          themeColor={this.themeColor}
           groupName={this.state.groupName}
           goBack={() => this.props.navigation.goBack()}
         />
@@ -149,7 +152,7 @@ class GroupInfo extends React.Component {
         <Header
           {...props}
           title="Done"
-          titleColor="#6873F2"
+          titleColor={this.themeColor}
           onPress={async () => {
             var groupInfo = await this.props.patchGroupInfo(
               this.group.id,
@@ -172,6 +175,16 @@ class GroupInfo extends React.Component {
         />
       ),
     });
+  }
+
+  checkBox(v) {
+    var selectedUser = this.state.selectedUser;
+    if (this.state.selectedUser.find(e => e === v)) {
+      selectedUser.pop(v);
+    } else {
+      selectedUser.push(v);
+    }
+    this.setState({selectedUser: selectedUser});
   }
 
   render() {
@@ -211,11 +224,14 @@ class GroupInfo extends React.Component {
           {insets => (
             <ModalSelector
               disabled={
-                this.group.groupAdmins.find(
-                  id => id !== this.props.userInfo.id,
-                ) ||
-                this.group.owner !== this.props.userInfo.id ||
-                v === this.props.userInfo.id
+                !(
+                  (this.group.groupAdmins.find(
+                    id => id === this.props.userInfo.id,
+                  ) ||
+                    this.group.owner === this.props.userInfo.id) &&
+                  this.group.owner !== v &&
+                  v !== this.props.userInfo.id
+                )
               }
               data={selectorData}
               animationType={'fade'}
@@ -289,10 +305,10 @@ class GroupInfo extends React.Component {
             justifyContent: 'center',
           }}
           onPress={() => this.setState({addUsers: true})}>
-          <FontAwesomeIcon icon={faPlus} color="#6873F2" size={22} />
+          <FontAwesomeIcon icon={faPlus} color={this.themeColor} size={22} />
           <Text
             style={{
-              color: '#6873F2',
+              color: this.themeColor,
               fontWeight: '600',
               fontSize: 16,
               marginLeft: 5,
@@ -316,6 +332,7 @@ class GroupInfo extends React.Component {
             },
           ]}
           imageIndex={0}
+          onLongPress={shareImage}
           backgroundColor="#ffffff"
           visible={
             (this.state.imageView || this.state.newAvatar) &&
@@ -350,7 +367,7 @@ class GroupInfo extends React.Component {
                       }}>
                       <Text
                         style={{
-                          color: '#6873F2',
+                          color: this.themeColor,
                           fontSize: 18,
                           marginHorizontal: 20,
                           marginVertical: 5,
@@ -416,7 +433,7 @@ class GroupInfo extends React.Component {
               title={'Done'}
               type="clear"
               containerStyle={{marginRight: 15, marginTop: 10}}
-              titleStyle={{color: '#6873F2'}}
+              titleStyle={{color: this.themeColor}}
               onPress={() => {
                 this.props.addUsers(this.group.id, this.state.selectedUser);
                 this.setState({addUsers: false, selectedUser: []});
@@ -461,27 +478,22 @@ class GroupInfo extends React.Component {
                         {this.props.user[v]?.email}
                       </Text>
                     </View>
-                    <CheckBox
-                      checkedIcon="dot-circle-o"
-                      uncheckedIcon="circle-o"
-                      checkedColor="#6873F2"
-                      containerStyle={{
+                    <TouchableOpacity
+                      onPress={() => this.checkBox(v)}
+                      style={{
                         position: 'absolute',
-                        right: -5,
-                      }}
-                      checked={Boolean(
-                        this.state.selectedUser.find(e => e === v),
-                      )}
-                      onPress={() => {
-                        var selectedUser = this.state.selectedUser;
-                        if (this.state.selectedUser.find(e => e === v)) {
-                          selectedUser.pop(v);
-                        } else {
-                          selectedUser.push(v);
+                        right: 15,
+                      }}>
+                      <Icon
+                        name={
+                          this.state.selectedUser.find(e => e === v)
+                            ? 'checkbox-intermediate'
+                            : 'checkbox-blank-outline'
                         }
-                        this.setState({selectedUser: selectedUser});
-                      }}
-                    />
+                        size={25}
+                        color={this.themeColor}
+                      />
+                    </TouchableOpacity>
                   </View>
                 ))
             ) : (
@@ -672,6 +684,7 @@ class GroupInfo extends React.Component {
             )
           }
         />
+        <View style={{height: 50}} />
       </KeyboardAwareScrollView>
     );
   }

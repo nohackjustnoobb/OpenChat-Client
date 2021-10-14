@@ -46,7 +46,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-import {Avatar, datetimeToString, fixHermesTime} from '../App';
+import {Avatar, datetimeToString, fixHermesTime, shareImage} from '../App';
 
 function ChatHeaderLeft(props) {
   return (
@@ -56,7 +56,7 @@ function ChatHeaderLeft(props) {
           icon={faChevronLeft}
           size={21}
           style={{marginRight: 5, marginLeft: 10}}
-          color="#6873F2"
+          color={props.themeColor}
         />
       </TouchableOpacity>
 
@@ -107,7 +107,7 @@ function MenuItem(props) {
         }}>
         <Text
           style={{
-            color: props.color === undefined ? '#6873F2' : props.color,
+            color: props.color === undefined ? props.themeColor : props.color,
             fontWeight: '300',
           }}>
           {props.title}
@@ -115,7 +115,7 @@ function MenuItem(props) {
         <Icon
           size={21}
           name={props.icon}
-          color={props.color === undefined ? '#6873F2' : props.color}
+          color={props.color === undefined ? props.themeColor : props.color}
         />
       </View>
       <View
@@ -185,25 +185,32 @@ function withActions(component, options) {
         }}>
         <MenuOption onSelect={options.pin}>
           <MenuItem
+            themeColor={options.themeColor}
             title={options.pinned ? 'Unpin' : 'Pin'}
             icon={options.pinned ? 'pin-off-outline' : 'pin-outline'}
             isDisable={options.pinIsDisable}
           />
         </MenuOption>
         <MenuOption onSelect={options.reply}>
-          <MenuItem title="Reply" icon="reply-outline" />
+          <MenuItem
+            title="Reply"
+            icon="reply-outline"
+            themeColor={options.themeColor}
+          />
         </MenuOption>
         <MenuOption onSelect={() => Clipboard.setString(options.content)}>
           <MenuItem
             title="Copy"
             icon="content-copy"
             underline={!options.ownMessage}
+            themeColor={options.themeColor}
           />
         </MenuOption>
         <MenuOption onSelect={options.messageInfo}>
           <MenuItem
             title="Info"
             icon="information-outline"
+            themeColor={options.themeColor}
             isDisable={options.ownMessage}
           />
         </MenuOption>
@@ -213,6 +220,7 @@ function withActions(component, options) {
             icon="delete-outline"
             color="#ff6666"
             underline={false}
+            themeColor={options.themeColor}
             isDisable={options.ownMessage}
           />
         </MenuOption>
@@ -237,6 +245,7 @@ const Message = React.memo(
     messageInfo,
     deleteMessage,
     pinIsDisable,
+    themeColor,
   }) {
     // handle message date
     var messageDate = new Date(item.sendDateTime);
@@ -281,7 +290,7 @@ const Message = React.memo(
           style={{
             padding: item.additionImage ? 5 : 7,
             borderRadius: 7,
-            backgroundColor: item.owner === ownID ? '#6873F2' : '#ffffff',
+            backgroundColor: item.owner === ownID ? themeColor : '#ffffff',
             marginLeft: displayUser || displayDate ? 0 : 55,
             paddingBottom: 2,
             maxWidth: Dimensions.get('window').width - 70,
@@ -321,7 +330,7 @@ const Message = React.memo(
                 <View
                   style={{
                     backgroundColor:
-                      item.owner !== ownID ? '#6873F2' : '#ffffff',
+                      item.owner !== ownID ? themeColor : '#ffffff',
                     width: 5,
                   }}
                 />
@@ -338,7 +347,7 @@ const Message = React.memo(
                     }}>
                     <Text
                       style={{
-                        color: item.owner !== ownID ? '#6873F2' : '#ffffff',
+                        color: item.owner !== ownID ? themeColor : '#ffffff',
                         fontWeight: '500',
                       }}>
                       {replyToUsername}
@@ -347,6 +356,10 @@ const Message = React.memo(
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
+                        opacity:
+                          !item.replyTo?.content && item.replyTo?.additionImage
+                            ? 0.6
+                            : 1,
                       }}>
                       <FontAwesomeIcon
                         icon={faImage}
@@ -437,7 +450,7 @@ const Message = React.memo(
           }}>
           <Text
             style={{
-              backgroundColor: '#6873F2',
+              backgroundColor: themeColor,
               color: '#ffffff',
               fontWeight: '600',
               padding: 2,
@@ -488,6 +501,7 @@ const Message = React.memo(
                   content: item.content,
                   messageInfo: messageInfo,
                   deleteMessage: deleteMessage,
+                  themeColor: themeColor,
                 })}
           </View>
         </View>
@@ -533,6 +547,7 @@ class Chat extends React.Component {
       toBottom: false,
     };
 
+    this.themeColor = props.themeColor;
     this.lastMessage = false;
   }
 
@@ -608,6 +623,7 @@ class Chat extends React.Component {
       headerLeft: () => (
         <ChatHeaderLeft
           groupName={this.groupName}
+          themeColor={this.themeColor}
           avatar={this.avatar}
           isDM={this.group.isDM}
           serverUrl={this.props.serverUrl}
@@ -637,7 +653,11 @@ class Chat extends React.Component {
               group: this.group.id,
             })
           }>
-          <FontAwesomeIcon icon={faThumbtack} color="#6873F2" size={21} />
+          <FontAwesomeIcon
+            icon={faThumbtack}
+            color={this.themeColor}
+            size={21}
+          />
         </TouchableOpacity>
       ),
     });
@@ -668,8 +688,13 @@ class Chat extends React.Component {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-            <FontAwesomeIcon icon={faCamera} size={21} color="#6873F2" />
-            <Text style={{marginLeft: 10, fontSize: 16, color: '#6873F2'}}>
+            <FontAwesomeIcon
+              icon={faCamera}
+              size={21}
+              color={this.themeColor}
+            />
+            <Text
+              style={{marginLeft: 10, fontSize: 16, color: this.themeColor}}>
               Camera
             </Text>
           </View>
@@ -686,8 +711,9 @@ class Chat extends React.Component {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-            <FontAwesomeIcon icon={faImage} size={21} color="#6873F2" />
-            <Text style={{marginLeft: 10, fontSize: 16, color: '#6873F2'}}>
+            <FontAwesomeIcon icon={faImage} size={21} color={this.themeColor} />
+            <Text
+              style={{marginLeft: 10, fontSize: 16, color: this.themeColor}}>
               Image Library
             </Text>
           </View>
@@ -709,10 +735,13 @@ class Chat extends React.Component {
             <KeyboardAvoidingView
               behavior="padding"
               style={{flex: 1}}
-              keyboardVerticalOffset={insets.bottom + 60}
+              keyboardVerticalOffset={
+                insets.bottom + (this.state.reply ? 70 : 55)
+              }
               enabled={!this.state.imageView && !this.state.imagePreview}>
               <ImageView
                 animationType="fade"
+                onLongPress={shareImage}
                 images={[
                   {
                     uri: this.state.imageView
@@ -762,7 +791,7 @@ class Chat extends React.Component {
                               onPress={() => this.setState({confirm: true})}>
                               <Text
                                 style={{
-                                  color: '#6873F2',
+                                  color: this.themeColor,
                                   fontSize: 18,
                                 }}>
                                 Confirm
@@ -853,7 +882,11 @@ class Chat extends React.Component {
                               reply,
                             );
                           }}>
-                          <Icon name={'send'} size={22} color="#6873F2" />
+                          <Icon
+                            name={'send'}
+                            size={22}
+                            color={this.themeColor}
+                          />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -906,6 +939,7 @@ class Chat extends React.Component {
                   return (
                     <Message
                       item={item}
+                      themeColor={this.themeColor}
                       displayUser={
                         index === messagesSort.lenghth - 1 ||
                         item.owner !== previousMessage?.owner
@@ -957,13 +991,13 @@ class Chat extends React.Component {
                     padding: 3,
                     overflow: 'hidden',
                     backgroundColor: '#ffffff',
-                    borderColor: '#6873F2',
+                    borderColor: this.themeColor,
                     borderWidth: 0.5,
                   }}>
                   <Icon
                     name="arrow-down-circle-outline"
                     size={30}
-                    color="#6873F2"
+                    color={this.themeColor}
                   />
                 </View>
               </TouchableWithoutFeedback>
@@ -985,16 +1019,28 @@ class Chat extends React.Component {
                   <View style={{flexDirection: 'row', flex: 1}}>
                     <View
                       style={{
-                        backgroundColor: '#6873F2',
+                        backgroundColor: this.themeColor,
                         width: 5,
                       }}
                     />
-                    <View style={{marginHorizontal: 10, marginVertical: 7}}>
-                      <Text style={{color: '#6873F2', fontWeight: '500'}}>
+                    <View
+                      style={{
+                        marginHorizontal: 10,
+                        marginVertical: 7,
+                      }}>
+                      <Text style={{color: this.themeColor, fontWeight: '500'}}>
                         {this.props.user[replyMessage?.owner]?.username}
                       </Text>
                       <View
-                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          opacity:
+                            !replyMessage?.content &&
+                            replyMessage?.additionImage
+                              ? 0.6
+                              : 1,
+                        }}>
                         <FontAwesomeIcon
                           icon={faImage}
                           size={15}
@@ -1035,7 +1081,7 @@ class Chat extends React.Component {
                     <Icon
                       name={'close-circle-outline'}
                       size={22}
-                      color="#6873F2"
+                      color={this.themeColor}
                     />
                   </TouchableOpacity>
                 </View>
@@ -1057,7 +1103,7 @@ class Chat extends React.Component {
                     style={{transform: [{scale: 1.4}]}}
                     cancelTextStyle={{color: '#ff0000'}}
                     onModalClose={i => (i.onPress ? i.onPress() : undefined)}>
-                    <Icon name={'plus'} size={26} color="#6873F2" />
+                    <Icon name={'plus'} size={26} color={this.themeColor} />
                   </ModalSelector>
                   <TextInput
                     style={{
@@ -1095,7 +1141,7 @@ class Chat extends React.Component {
                       );
                       this.setState({content: '', reply: null});
                     }}>
-                    <Icon name={'send'} size={26} color="#6873F2" />
+                    <Icon name={'send'} size={26} color={this.themeColor} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1107,4 +1153,4 @@ class Chat extends React.Component {
   }
 }
 
-export default React.memo(Chat);
+export default Chat;

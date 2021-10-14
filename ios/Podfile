@@ -3,6 +3,7 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 project './openchat.xcodeproj'
 
 pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+pod 'rn-fetch-blob', :path => '../node_modules/rn-fetch-blob'
 
 platform :ios, '11.0'
 
@@ -14,6 +15,8 @@ target 'openchat' do
     # to enable hermes on iOS, change `false` to `true` and then install pods
     :hermes_enabled => true
   )
+
+  pod 'RNReactNativeHapticFeedback', :path => '../node_modules/react-native-haptic-feedback'
 
   target 'openchatTests' do
     inherit! :complete

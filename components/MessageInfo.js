@@ -18,7 +18,7 @@ import DropShadow from 'react-native-drop-shadow';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {SafeAreaInsetsContext} from 'react-native-safe-area-context';
 
-import {Avatar} from '../App';
+import {Avatar, fixHermesTime} from '../App';
 
 function MessageInfoHeaderLeft(props) {
   return (
@@ -30,11 +30,11 @@ function MessageInfoHeaderLeft(props) {
           icon={faChevronLeft}
           size={21}
           style={{marginRight: 5, marginLeft: 10}}
-          color="#6873F2"
+          color={props.themeColor}
         />
         <Text
           numberOfLines={1}
-          style={{color: '#6873F2', fontSize: 16, width: '70%'}}>
+          style={{color: props.themeColor, fontSize: 16, width: '70%'}}>
           {props.groupName}
         </Text>
       </TouchableOpacity>
@@ -47,6 +47,7 @@ class MessageInfo extends React.Component {
     super(props);
     this.group = props.group[props.route.params.group];
     this.groupName = this.group.groupName;
+    this.themeColor = props.themeColor;
 
     if (this.group.isDM) {
       this.userID = this.group.members.filter(v => v !== props.userInfo.id)[0];
@@ -59,6 +60,7 @@ class MessageInfo extends React.Component {
       headerLeft: () => (
         <MessageInfoHeaderLeft
           groupName={this.groupName}
+          themeColor={this.themeColor}
           goBack={() => this.props.navigation.goBack()}
         />
       ),
@@ -97,7 +99,7 @@ class MessageInfo extends React.Component {
           }}>
           <Text
             style={{
-              backgroundColor: '#6873F2',
+              backgroundColor: this.themeColor,
               color: '#ffffff',
               fontWeight: '600',
               padding: 2,
@@ -153,7 +155,7 @@ class MessageInfo extends React.Component {
                 style={{
                   padding: this.message?.additionImage ? 5 : 7,
                   borderRadius: 7,
-                  backgroundColor: '#6873F2',
+                  backgroundColor: this.themeColor,
                   paddingBottom: 2,
                   maxWidth: Dimensions.get('window').width - 70,
                 }}>
@@ -299,14 +301,7 @@ class MessageInfo extends React.Component {
                     color: '#ffffff',
                     marginTop: 3,
                   }}>
-                  {new Date(this.message?.sendDateTime).toLocaleString(
-                    'en-US',
-                    {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                      hour12: true,
-                    },
-                  )}
+                  {fixHermesTime(new Date(this.message?.sendDateTime))}
                 </Text>
               </View>
             </DropShadow>

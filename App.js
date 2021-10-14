@@ -35,9 +35,12 @@ import {
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
-import {Button, CheckBox} from 'react-native-elements';
+import {Button} from 'react-native-elements';
 import {launchImageLibrary} from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
+import RNFetchBlob from 'rn-fetch-blob';
+import Share from 'react-native-share';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // components
 import Home from './components/Home';
@@ -69,7 +72,7 @@ function HomeHeaderTitle(props) {
       {props.wsConnected ? (
         <View style={{alignItems: 'center'}}>
           <Text style={{fontSize: 21, fontWeight: '600'}}>
-            <Text style={{color: '#6873F2'}}>Open</Text>Chat
+            <Text style={{color: props.themeColor}}>Open</Text>Chat
           </Text>
           <View
             style={{
@@ -103,7 +106,7 @@ function HomeHeaderLeft(props) {
         icon={faCog}
         size={25}
         style={{marginLeft: 30}}
-        color="#6873F2"
+        color={props.themeColor}
       />
     </TouchableOpacity>
   );
@@ -118,7 +121,7 @@ function HomeHeaderRight(props) {
         icon={faUserPlus}
         size={25}
         style={{marginRight: 30}}
-        color="#6873F2"
+        color={props.themeColor}
       />
     </TouchableOpacity>
   );
@@ -133,9 +136,9 @@ function BackHeaderLeft(props) {
         icon={faChevronLeft}
         size={21}
         style={{marginRight: 5, marginLeft: 10}}
-        color="#6873F2"
+        color={props.themeColor}
       />
-      <Text style={{fontSize: 18, color: '#6873F2'}}>{props.label}</Text>
+      <Text style={{fontSize: 18, color: props.themeColor}}>{props.label}</Text>
     </TouchableOpacity>
   );
 }
@@ -148,12 +151,12 @@ function RelationshipHeaderRight(props) {
         onPress={() =>
           props.setState({modal: true, selectedUser: [], next: false})
         }>
-        <FontAwesomeIcon icon={faPlus} size={21} color="#6873F2" />
+        <FontAwesomeIcon icon={faPlus} size={21} color={props.themeColor} />
       </TouchableOpacity>
       <TouchableOpacity
         style={{flexDirection: 'row', alignItems: 'center', marginRight: 20}}
         onPress={() => props.navigation.navigation.navigate('Search')}>
-        <FontAwesomeIcon icon={faSearch} size={21} color="#6873F2" />
+        <FontAwesomeIcon icon={faSearch} size={21} color={props.themeColor} />
       </TouchableOpacity>
     </View>
   );
@@ -202,9 +205,9 @@ function fixHermesTime(datetime) {
 
   if (isHermes()) {
     var hour = datetime.getHours();
-    timeString = `${hour > 12 ? hour - 12 : hour}:${datetime.getMinutes()} ${
-      hour > 12 ? 'PM' : 'AM'
-    }`;
+    timeString = `${
+      hour > 12 ? hour - 12 : hour === 0 ? '12' : hour
+    }:${datetime.getMinutes()} ${hour > 12 ? 'PM' : 'AM'}`;
   }
 
   return timeString;
@@ -242,12 +245,34 @@ function datetimeToString(datetime) {
   return `${datetimeString} ${fixHermesTime(datetime)}`;
 }
 
+async function shareImage(img) {
+  try {
+    var res = await RNFetchBlob.fetch('GET', img.uri);
+    if (res.info().status === 200) {
+      const base64Str = `data:image/*;base64,${res.base64()}`;
+      await Share.open({
+        title: 'Share Image',
+        failOnCancel: false,
+        url: base64Str,
+        activityItemSources: [
+          {
+            placeholderItem: {type: 'url', content: img.uri},
+          },
+        ],
+      });
+    }
+  } catch (e) {
+    Alert.alert('Failed To Get Image');
+  }
+}
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.MMKV = new MMKVStorage.Loader().initialize();
     var token = this.MMKV.getString('token');
     var serverUrl = this.MMKV.getString('serverUrl');
+    this.themeColor = this.MMKV.getString('themeColor');
+    this.themeColor = this.themeColor ? this.themeColor : '#f26868';
     if (!serverUrl && token) {
       this.MMKV.removeItem('token');
       token = null;
@@ -272,13 +297,23 @@ class App extends React.Component {
       groupName: '',
       groupAvatar: null,
     };
+
+    this.gotUser = [];
   }
 
   componentDidMount() {
     this.appStateSubscription = AppState.addEventListener('change', change => {
-      if (change === 'active' && !this.state.wsConnected) {
+      if (
+        change === 'active' &&
+        !this.state.wsConnected &&
+        this.state.serverUrl
+      ) {
         this.connectWS();
-      } else if (change !== 'active' && this.state.wsConnected) {
+      } else if (
+        change === 'background' &&
+        this.state.wsConnected &&
+        this.state.serverUrl
+      ) {
         this.ws.close();
       }
     });
@@ -298,6 +333,12 @@ class App extends React.Component {
     } catch (e) {
       Alert.alert('Cannot connect to server');
     }
+  }
+
+  changeThemeColor(color) {
+    this.themeColor = color;
+    this.MMKV.setString('themeColor', color);
+    this.forceUpdate();
   }
 
   // clear server and token
@@ -331,10 +372,9 @@ class App extends React.Component {
   // WS message handler
   WSHandler(e) {
     function yourInfoHandler(info) {
-      setState({userInfo: info});
       var user = {};
       user[info.id] = info;
-      setState({user: user});
+      return {user: user, userInfo: info};
     }
 
     function groupHandler(groupList) {
@@ -343,7 +383,7 @@ class App extends React.Component {
         return map;
       }, {});
       var group = {...state.group, ...addGroup};
-      setState({group: group});
+      return {group: group};
     }
 
     function usersHandler(userList) {
@@ -352,7 +392,7 @@ class App extends React.Component {
         return map;
       }, {});
       var user = {...state.user, ...addUser};
-      setState({user: user});
+      return {user: user};
     }
 
     function messageHandler(message, pin = false) {
@@ -375,18 +415,18 @@ class App extends React.Component {
 
         var addMessage = {};
         addMessage[groupID] = groupMessage;
-        setState({message: {...state.message, ...addMessage}, group: group});
+        return {message: {...state.message, ...addMessage}, group: group};
       } else if (!pin) {
         var groupMessage = {};
         groupMessage[groupID] = [message];
-        setState({message: {...state.message, ...groupMessage}, group: group});
+        return {message: {...state.message, ...groupMessage}, group: group};
       }
     }
 
     function groupDeletedHandler(id) {
       var group = state.group;
       delete group[id];
-      setState({group: group});
+      return {group: group};
     }
 
     function statusHandler(status) {
@@ -396,15 +436,15 @@ class App extends React.Component {
       user[id].isOnline = status.isOnline;
       user[id].last_login = status.last_login;
 
-      setState({user: user});
+      return {user: user};
     }
 
     // decode
     var data = JSON.parse(e.data);
 
     // variable for functions
-    var setState = this.setState.bind(this);
     var state = this.state;
+    var stateChanged = {};
 
     // define event and its handler
     var handler = {
@@ -413,7 +453,7 @@ class App extends React.Component {
       users: usersHandler,
       message: messageHandler,
       groupDeleted: groupDeletedHandler,
-      relationship: setState,
+      relationship: this.setState.bind(this),
       pinMessage: m => messageHandler(m, true),
       status: statusHandler,
     };
@@ -422,10 +462,11 @@ class App extends React.Component {
     for (let eventType in data) {
       for (let [key, handlerFunction] of Object.entries(handler)) {
         if (eventType === key) {
-          handlerFunction(data[eventType]);
+          stateChanged = {...stateChanged, ...handlerFunction(data[eventType])};
         }
       }
     }
+    if (Object.keys(stateChanged).length !== 0) this.setState(stateChanged);
   }
 
   // connect or reconnect to WS
@@ -437,7 +478,10 @@ class App extends React.Component {
     this.ws.onopen = e => {
       this.setState({wsConnected: true});
       this.ws.send(
-        JSON.stringify({Authorization: `token ${this.state.token}`}),
+        JSON.stringify({
+          Authorization: `token ${this.state.token}`,
+          users: this.gotUser,
+        }),
       );
       if (this.trackUser) {
         this.toggleTrackByID(this.trackUser, false);
@@ -465,7 +509,9 @@ class App extends React.Component {
 
   // get user info via WS
   getUserByID(ids) {
-    this.ws.send(JSON.stringify({users: ids}));
+    ids = ids.filter(v => !this.gotUser.find(_ => _ === v));
+    this.gotUser.push(...ids);
+    if (ids) this.ws.send(JSON.stringify({users: ids}));
   }
 
   async getGroupMessageByID(id) {
@@ -991,15 +1037,24 @@ class App extends React.Component {
                 options={navigation => ({
                   headerTitle: props => (
                     <HomeHeaderTitle
+                      themeColor={this.themeColor}
                       wsConnected={this.state.wsConnected}
                       {...props}
                     />
                   ),
                   headerLeft: props => (
-                    <HomeHeaderLeft navigation={navigation} {...props} />
+                    <HomeHeaderLeft
+                      themeColor={this.themeColor}
+                      navigation={navigation}
+                      {...props}
+                    />
                   ),
                   headerRight: props => (
-                    <HomeHeaderRight navigation={navigation} {...props} />
+                    <HomeHeaderRight
+                      themeColor={this.themeColor}
+                      navigation={navigation}
+                      {...props}
+                    />
                   ),
                   headerStyle: {
                     height: getStatusBarHeight() + 70,
@@ -1013,11 +1068,11 @@ class App extends React.Component {
                     serverUrl={this.state.serverUrl}
                     userInfo={this.state.userInfo}
                     token={this.state.token}
-                    wsConnected={this.state.wsConnected}
                     serverInfo={this.state.serverInfo}
                     user={this.state.user}
                     group={this.state.group}
-                    message={this.state.message}
+                    wsConnected={this.state.wsConnected}
+                    themeColor={this.themeColor}
                     getServerInfo={this.getServerInfo.bind(this)}
                     connectWS={this.connectWS.bind(this)}
                     getUserByID={this.getUserByID.bind(this)}
@@ -1027,15 +1082,19 @@ class App extends React.Component {
               <Stack.Screen
                 name="Settings"
                 options={{
-                  headerLeft: props => <BackHeaderLeft {...props} />,
+                  headerLeft: props => (
+                    <BackHeaderLeft themeColor={this.themeColor} {...props} />
+                  ),
                 }}>
                 {props => (
                   <Settings
                     userInfo={this.state.userInfo}
                     serverInfo={this.state.serverInfo}
                     serverUrl={this.state.serverUrl}
+                    themeColor={this.themeColor}
                     patchUserInfo={this.patchUserInfo.bind(this)}
                     setState={this.setState.bind(this)}
+                    changeThemeColor={this.changeThemeColor.bind(this)}
                     disconnectServer={this.disconnectServer.bind(this)}
                     logout={this.logout.bind(this)}
                     {...props}
@@ -1058,6 +1117,7 @@ class App extends React.Component {
                     togglePinByID={this.togglePinByID.bind(this)}
                     toggleTrackByID={this.toggleTrackByID.bind(this)}
                     serverUrl={this.state.serverUrl}
+                    themeColor={this.themeColor}
                     group={this.state.group}
                     user={this.state.user}
                     message={this.state.message}
@@ -1075,6 +1135,7 @@ class App extends React.Component {
                     serverUrl={this.state.serverUrl}
                     friends={this.state.friends}
                     blocked={this.state.blocked}
+                    themeColor={this.themeColor}
                     patchGroupInfo={this.patchGroupInfo.bind(this)}
                     getUserByID={this.getUserByID.bind(this)}
                     deleteGroupByID={this.deleteGroupByID.bind(this)}
@@ -1090,9 +1151,12 @@ class App extends React.Component {
               <Stack.Screen
                 name="Relationship"
                 options={navigation => ({
-                  headerLeft: props => <BackHeaderLeft {...props} />,
+                  headerLeft: props => (
+                    <BackHeaderLeft themeColor={this.themeColor} {...props} />
+                  ),
                   headerRight: props => (
                     <RelationshipHeaderRight
+                      themeColor={this.themeColor}
                       navigation={navigation}
                       setState={this.setState.bind(this)}
                       {...props}
@@ -1139,7 +1203,7 @@ class App extends React.Component {
                             title={this.state.next ? 'Create' : 'Next'}
                             type="clear"
                             containerStyle={{marginRight: 15, marginTop: 10}}
-                            titleStyle={{color: '#6873F2'}}
+                            titleStyle={{color: this.themeColor}}
                             disabled={!this.state.selectedUser.length}
                             onPress={this.createOrNext.bind(this)}
                           />
@@ -1205,19 +1269,22 @@ class App extends React.Component {
                                     {this.state.user[v]?.email}
                                   </Text>
                                 </View>
-                                <CheckBox
-                                  checkedIcon="dot-circle-o"
-                                  uncheckedIcon="circle-o"
-                                  checkedColor="#6873F2"
-                                  containerStyle={{
-                                    position: 'absolute',
-                                    right: -5,
-                                  }}
-                                  checked={Boolean(
-                                    this.state.selectedUser.find(e => e === v),
-                                  )}
+                                <TouchableOpacity
                                   onPress={() => this.checkBox(v)}
-                                />
+                                  style={{
+                                    position: 'absolute',
+                                    right: 15,
+                                  }}>
+                                  <Icon
+                                    name={
+                                      this.state.selectedUser.find(e => e === v)
+                                        ? 'checkbox-intermediate'
+                                        : 'checkbox-blank-outline'
+                                    }
+                                    size={25}
+                                    color={this.themeColor}
+                                  />
+                                </TouchableOpacity>
                               </View>
                             ))}
                           </ScrollView>
@@ -1229,7 +1296,7 @@ class App extends React.Component {
                         name="Friends"
                         options={{
                           headerShown: false,
-                          tabBarActiveTintColor: '#6873F2',
+                          tabBarActiveTintColor: this.themeColor,
                           tabBarIcon: iconProps => (
                             <FontAwesomeIcon
                               icon={faUserFriends}
@@ -1240,6 +1307,7 @@ class App extends React.Component {
                         {tabProps => (
                           <Friends
                             friends={this.state.friends}
+                            themeColor={this.themeColor}
                             friendRequest={this.state.friendRequest}
                             user={this.state.user}
                             userInfo={this.state.userInfo}
@@ -1261,7 +1329,7 @@ class App extends React.Component {
                         name="Blocked"
                         options={{
                           headerShown: false,
-                          tabBarActiveTintColor: '#6873F2',
+                          tabBarActiveTintColor: this.themeColor,
                           tabBarIcon: iconProps => (
                             <FontAwesomeIcon icon={faBan} {...iconProps} />
                           ),
@@ -1270,6 +1338,7 @@ class App extends React.Component {
                           <Blocked
                             blocked={this.state.blocked}
                             user={this.state.user}
+                            themeColor={this.themeColor}
                             serverUrl={this.state.serverUrl}
                             toggleUserBlock={this.toggleUserBlock.bind(this)}
                             getUserByID={this.getUserByID.bind(this)}
@@ -1284,9 +1353,14 @@ class App extends React.Component {
               </Stack.Screen>
               <Stack.Screen
                 name="Search"
-                options={{headerLeft: props => <BackHeaderLeft {...props} />}}>
+                options={{
+                  headerLeft: props => (
+                    <BackHeaderLeft themeColor={this.themeColor} {...props} />
+                  ),
+                }}>
                 {props => (
                   <Search
+                    themeColor={this.themeColor}
                     friends={this.state.friends}
                     blocked={this.state.blocked}
                     friendRequest={this.state.friendRequest}
@@ -1308,6 +1382,7 @@ class App extends React.Component {
                   <MessageInfo
                     group={this.state.group}
                     userInfo={this.state.userInfo}
+                    themeColor={this.themeColor}
                     user={this.state.user}
                     serverUrl={this.state.serverUrl}
                     deleteMessageByID={this.deleteMessageByID.bind(this)}
@@ -1325,6 +1400,7 @@ class App extends React.Component {
                     getUserByID={this.getUserByID.bind(this)}
                     togglePinByID={this.togglePinByID.bind(this)}
                     group={this.state.group}
+                    themeColor={this.themeColor}
                     userInfo={this.state.userInfo}
                     user={this.state.user}
                     serverUrl={this.state.serverUrl}
@@ -1371,5 +1447,5 @@ class App extends React.Component {
   }
 }
 
-export {BackHeaderLeft, Avatar, datetimeToString, fixHermesTime};
+export {BackHeaderLeft, Avatar, datetimeToString, fixHermesTime, shareImage};
 export default App;

@@ -12,6 +12,7 @@ import {Avatar} from '../App';
 class Search extends React.Component {
   constructor(props) {
     super(props);
+    this.themeColor = props.themeColor;
     this.state = {
       search: '',
     };
@@ -76,10 +77,10 @@ class Search extends React.Component {
             }}
             buttonStyle={{
               paddingVertical: 2,
-              borderColor: '#6873F2',
+              borderColor: this.themeColor,
               borderWidth: 1,
             }}
-            titleStyle={{color: '#6873F2', fontSize: 14}}
+            titleStyle={{color: this.themeColor, fontSize: 14}}
             onPress={() => {
               if (
                 this.props.friendRequest
@@ -105,7 +106,7 @@ class Search extends React.Component {
           containerStyle={{backgroundColor: '#F9F9F9'}}
           inputContainerStyle={{backgroundColor: '#eaeaea'}}
           placeholderTextColor="#aaaaaa"
-          cancelButtonProps={{color: '#6873F2'}}
+          cancelButtonProps={{color: this.themeColor}}
           returnKeyType="search"
           autoCorrect={false}
           onClear={() => this.props.setState({searchResult: []})}

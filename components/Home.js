@@ -8,19 +8,20 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faImage, faFile} from '@fortawesome/free-solid-svg-icons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import {Avatar} from '../App';
+import {Avatar, fixHermesTime} from '../App';
 
 // Main Page
 class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.themeColor = props.themeColor;
   }
 
   componentDidMount() {
     // initialize
     if (!this.props.serverInfo) this.props.getServerInfo();
-    this.props.connectWS();
+    if (!this.props.wsConnected) this.props.connectWS();
   }
 
   componentDidUpdate() {
@@ -28,6 +29,8 @@ class Home extends React.Component {
   }
 
   render() {
+    this.themeColor = this.props.themeColor;
+
     // Sort by time
     var groupsSorted = Object.entries(this.props.group)
       .map(v => v[1])
@@ -66,7 +69,7 @@ class Home extends React.Component {
                 <Text
                   style={{
                     fontSize: 12,
-                    color: '#8A90D5',
+                    color: this.themeColor,
                     fontWeight: '500',
                   }}>{`${
                   userID === this.props.userInfo.id
@@ -103,11 +106,7 @@ class Home extends React.Component {
               if (diff.getUTCDate() - 1 <= 1) {
                 sendTimeString = 'Yesterday';
                 if (diff.getUTCDate() - 1 === 0) {
-                  sendTimeString = sendTime.toLocaleString('en-US', {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true,
-                  });
+                  sendTimeString = fixHermesTime(sendTime);
                 }
               }
             }
@@ -146,14 +145,14 @@ class Home extends React.Component {
                       right: 0,
                       top: 5,
                       fontSize: 12,
-                      color: '#8A90D5',
+                      color: this.themeColor,
                     }}>
                     {sendTimeString}
                   </Text>
                   {item.unReadMessage ? (
                     <View
                       style={{
-                        backgroundColor: '#8A90D5',
+                        backgroundColor: this.themeColor,
                         width: 16,
                         height: 16,
                         borderRadius: 13,
@@ -189,12 +188,12 @@ class Home extends React.Component {
                           alignItems: 'center',
                           opacity: 0.9,
                         }}>
-                        <Icon name="cancel" size={12} color="#8A90D5" />
+                        <Icon name="cancel" size={12} color={this.themeColor} />
                         <Text
                           style={{
                             marginLeft: 3,
                             fontSize: 12,
-                            color: '#8A90D5',
+                            color: this.themeColor,
                             fontWeight: '300',
                           }}>
                           Deleted Message
@@ -207,12 +206,12 @@ class Home extends React.Component {
                           icon={
                             item.lastMessage?.additionImage ? faImage : faFile
                           }
-                          color="#8A90D5"
+                          color={this.themeColor}
                           size={item.lastMessage?.additionImage ? 15 : 12}
                         />
                         <Text
                           style={{
-                            color: '#8A90D5',
+                            color: this.themeColor,
                             marginLeft: 5,
                             fontWeight: '600',
                             fontSize: 12,
@@ -223,7 +222,11 @@ class Home extends React.Component {
                     ) : (
                       <Text
                         numberOfLines={1}
-                        style={{fontSize: 12, color: '#8A90D5', width: '60%'}}>
+                        style={{
+                          fontSize: 12,
+                          color: this.themeColor,
+                          width: '60%',
+                        }}>
                         {item.lastMessage?.content}
                       </Text>
                     )}
@@ -232,8 +235,9 @@ class Home extends React.Component {
               </TouchableOpacity>
               <View
                 style={{
-                  height: 0.5,
+                  height: 1,
                   backgroundColor: '#DDDDDD',
+                  opacity: 0.5,
                   width: '80%',
                   alignSelf: 'center',
                   display: index === groupsSorted.length - 1 ? 'none' : 'flex',
@@ -247,4 +251,4 @@ class Home extends React.Component {
   }
 }
 
-export default Home;
+export default React.memo(Home);

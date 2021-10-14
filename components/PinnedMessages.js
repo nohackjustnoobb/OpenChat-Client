@@ -26,7 +26,7 @@ import FastImage from 'react-native-fast-image';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import {Avatar} from '../App';
+import {Avatar, fixHermesTime} from '../App';
 
 function PinnedMessagesHeaderLeft(props) {
   return (
@@ -38,11 +38,11 @@ function PinnedMessagesHeaderLeft(props) {
           icon={faChevronLeft}
           size={21}
           style={{marginRight: 5, marginLeft: 10}}
-          color="#6873F2"
+          color={props.themeColor}
         />
         <Text
           numberOfLines={1}
-          style={{color: '#6873F2', fontSize: 16, width: '60%'}}>
+          style={{color: props.themeColor, fontSize: 16, width: '60%'}}>
           {props.groupName}
         </Text>
       </TouchableOpacity>
@@ -61,7 +61,7 @@ function MenuItem(props) {
         }}>
         <Text
           style={{
-            color: props.color === undefined ? '#6873F2' : props.color,
+            color: props.color === undefined ? props.themeColor : props.color,
             fontWeight: '300',
           }}>
           {props.title}
@@ -69,7 +69,7 @@ function MenuItem(props) {
         <Icon
           size={21}
           name={props.icon}
-          color={props.color === undefined ? '#6873F2' : props.color}
+          color={props.color === undefined ? props.themeColor : props.color}
         />
       </View>
       <View
@@ -92,6 +92,7 @@ class PinnedMessages extends React.Component {
     super(props);
     this.group = props.group[props.route.params.group];
     this.groupName = this.group.groupName;
+    this.themeColor = props.themeColor;
 
     if (this.group.isDM) {
       this.userID = this.group.members.filter(v => v !== props.userInfo.id)[0];
@@ -104,6 +105,7 @@ class PinnedMessages extends React.Component {
       headerLeft: () => (
         <PinnedMessagesHeaderLeft
           groupName={this.groupName}
+          themeColor={this.themeColor}
           goBack={() => this.props.navigation.goBack()}
         />
       ),
@@ -121,6 +123,17 @@ class PinnedMessages extends React.Component {
         }}
         style={{backgroundColor: '#F9F9F9'}}
         data={this.pinnedMessages}
+        ListEmptyComponent={
+          <Text
+            style={{
+              alignSelf: 'center',
+              color: '#888888',
+              margin: 20,
+              fontSize: 16,
+            }}>
+            No Pinned Messages
+          </Text>
+        }
         renderItem={({item, index}) => {
           // get user info that is not exists
           if (!this.props.user[item.owner]) {
@@ -168,7 +181,7 @@ class PinnedMessages extends React.Component {
                 }}>
                 <Text
                   style={{
-                    backgroundColor: '#6873F2',
+                    backgroundColor: this.themeColor,
                     color: '#ffffff',
                     fontWeight: '600',
                     padding: 2,
@@ -241,7 +254,7 @@ class PinnedMessages extends React.Component {
                             borderRadius: 7,
                             backgroundColor:
                               item.owner === this.props.userInfo.id
-                                ? '#6873F2'
+                                ? this.themeColor
                                 : '#ffffff',
 
                             paddingBottom: 2,
@@ -292,7 +305,7 @@ class PinnedMessages extends React.Component {
                                   style={{
                                     backgroundColor:
                                       item.owner !== this.props.userInfo.id
-                                        ? '#6873F2'
+                                        ? this.themeColor
                                         : '#ffffff',
                                     width: 5,
                                   }}
@@ -311,7 +324,7 @@ class PinnedMessages extends React.Component {
                                       style={{
                                         color:
                                           item.owner !== this.props.userInfo.id
-                                            ? '#6873F2'
+                                            ? this.themeColor
                                             : '#ffffff',
                                         fontWeight: '500',
                                       }}>
@@ -411,11 +424,7 @@ class PinnedMessages extends React.Component {
                                   : '#000000',
                               marginTop: 3,
                             }}>
-                            {messageDate.toLocaleString('en-US', {
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              hour12: true,
-                            })}
+                            {fixHermesTime(messageDate)}
                           </Text>
                         </View>
                         <View style={{flex: 1}} />
@@ -446,6 +455,7 @@ class PinnedMessages extends React.Component {
                           );
                         }}>
                         <MenuItem
+                          themeColor={this.themeColor}
                           title="Unpin"
                           icon="pin-off-outline"
                           isDisable={
@@ -463,6 +473,7 @@ class PinnedMessages extends React.Component {
                         onSelect={() => Clipboard.setString(item.content)}>
                         <MenuItem
                           title="Copy"
+                          themeColor={this.themeColor}
                           icon="content-copy"
                           underline={false}
                         />
