@@ -2,9 +2,11 @@
 
 **An open source chatting app for mobile with React Native.**
 
-## Problems
+## To Do
 
--Can't push notifications (I don't have money to enroll Apple Developer Program 😐 )
+-push notifications (I don't have money to enroll Apple Developer Program 😐 )
+
+-use classes (may rewrite with flutter)
 
 ## Set up development environment
 
